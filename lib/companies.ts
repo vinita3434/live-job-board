@@ -118,8 +118,10 @@ export const ROLE_KEYWORDS: string[] = [
  * these, even if it matched an include keyword. Removes senior/VP/eng roles. */
 export const EXCLUDE_KEYWORDS: string[] = [
   // seniority
-  "senior", "sr.", "staff", "principal", "lead", "director", "head of",
+  "senior", "sr", "staff", "principal", "lead", "director", "head of",
   "vp", "vice president", "chief", "distinguished", "executive",
+  // mid-level numbering (e.g. "Product Manager II", "Analyst III")
+  "ii", "iii",
   "group product manager", "gpm", "global head",
   // engineering / non-PM roles
   "ml engineer", "machine learning engineer", "software engineer",
