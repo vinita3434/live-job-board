@@ -217,6 +217,151 @@ async function icims(c: CompanyConfig): Promise<Job[]> {
   return out;
 }
 
+/* ---------------- proprietary career sites (keyword search) -------------- *
+ * Microsoft, Amazon, and Google are too large to fetch wholesale, so these
+ * adapters query a small set of role keywords, paginate a little, then merge
+ * + dedupe. Endpoints are public but undocumented — confirm at build time. */
+const CUSTOM_QUERIES = [
+  "product manager",
+  "program manager",
+  "product operations",
+  "business analyst",
+  "strategy and operations",
+  "forward deployed",
+];
+const CUSTOM_MAX_PAGES = 2;
+
+async function microsoft(c: CompanyConfig): Promise<Job[]> {
+  const seen = new Set<string>();
+  const out: Job[] = [];
+  const perQuery = await Promise.all(
+    CUSTOM_QUERIES.map(async (q) => {
+      const found: Job[] = [];
+      for (let pg = 1; pg <= CUSTOM_MAX_PAGES; pg++) {
+        const data = await getJson(
+          `https://gcsservices.careers.microsoft.com/search/api/v1/search?q=${encodeURIComponent(q)}&l=en_us&pg=${pg}&pgSz=20&o=Relevance&flt=true`
+        );
+        const jobs = data?.operationResult?.result?.jobs ?? [];
+        if (jobs.length === 0) break;
+        for (const j of jobs) {
+          const id = j.jobId;
+          if (!id) continue;
+          const locs = j.properties?.locations;
+          found.push({
+            id: `ms-${id}`,
+            title: j.title ?? "Untitled role",
+            company: c.name,
+            companyId: companyId(c),
+            category: c.category ?? "",
+            location: Array.isArray(locs) ? locs.join(", ") : (locs ?? j.properties?.primaryLocation ?? ""),
+            department: "",
+            url: `https://jobs.careers.microsoft.com/global/en/job/${id}`,
+            updatedAt: j.postingDate ?? null,
+          });
+        }
+        if (jobs.length < 20) break;
+      }
+      return found;
+    })
+  );
+  for (const list of perQuery)
+    for (const j of list) {
+      if (seen.has(j.id)) continue;
+      seen.add(j.id);
+      out.push(j);
+    }
+  return out;
+}
+
+async function amazon(c: CompanyConfig): Promise<Job[]> {
+  const seen = new Set<string>();
+  const out: Job[] = [];
+  const perQuery = await Promise.all(
+    CUSTOM_QUERIES.map(async (q) => {
+      const found: Job[] = [];
+      for (let pg = 0; pg < CUSTOM_MAX_PAGES; pg++) {
+        const data = await getJson(
+          `https://www.amazon.jobs/en/search.json?base_query=${encodeURIComponent(q)}&result_limit=100&offset=${pg * 100}&sort=recent`
+        );
+        const jobs = data.jobs ?? [];
+        if (jobs.length === 0) break;
+        for (const j of jobs) {
+          const id = j.id_icims ?? j.job_path;
+          if (!id) continue;
+          let updatedAt: string | null = null;
+          if (j.posted_date) {
+            const d = Date.parse(j.posted_date);
+            if (!Number.isNaN(d)) updatedAt = new Date(d).toISOString();
+          }
+          found.push({
+            id: `amz-${id}`,
+            title: j.title ?? "Untitled role",
+            company: c.name,
+            companyId: companyId(c),
+            category: c.category ?? "",
+            location: j.normalized_location ?? j.location ?? "",
+            department: "",
+            url: `https://www.amazon.jobs${j.job_path ?? ""}`,
+            updatedAt,
+          });
+        }
+        if (jobs.length < 100) break;
+      }
+      return found;
+    })
+  );
+  for (const list of perQuery)
+    for (const j of list) {
+      if (seen.has(j.id)) continue;
+      seen.add(j.id);
+      out.push(j);
+    }
+  return out;
+}
+
+/* Google's v3 search API was retired; the current careers site is server-
+ * rendered, so we parse job <li> blocks out of the results HTML. */
+async function google(c: CompanyConfig): Promise<Job[]> {
+  const seen = new Set<string>();
+  const out: Job[] = [];
+  for (const q of CUSTOM_QUERIES) {
+    for (let page = 1; page <= CUSTOM_MAX_PAGES; page++) {
+      const html = await getText(
+        `https://www.google.com/about/careers/applications/jobs/results/?q=${encodeURIComponent(q)}&page=${page}`
+      );
+      const blocks = html.split('<li class="lLd3Je"').slice(1);
+      if (blocks.length === 0) break;
+      let added = 0;
+      for (const b of blocks) {
+        const id = (b.match(/ssk=.17:(\d+)./) ?? b.match(/jobs\/results\/(\d+)/))?.[1];
+        if (!id || seen.has(id)) continue;
+        const tm = b.match(/<h3[^>]*class="QJPWVe"[^>]*>([\s\S]*?)<\/h3>/);
+        const title = tm ? decodeEntities(tm[1].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim()) : "";
+        if (!title) continue;
+        const href = b.match(/jobs\/results\/(\d+-[^"'?\\ ]+)/)?.[1];
+        const locs = [...b.matchAll(/<span class="r0wTof[^"]*">([^<]+)<\/span>/g)]
+          .map((m) => decodeEntities(m[1].replace(/^;\s*/, "").trim()))
+          .filter(Boolean);
+        seen.add(id);
+        added++;
+        out.push({
+          id: `goog-${id}`,
+          title,
+          company: c.name,
+          companyId: companyId(c),
+          category: c.category ?? "",
+          location: locs.join("; "),
+          department: "",
+          url: `https://www.google.com/about/careers/applications/jobs/results/${href ?? id}`,
+          updatedAt: null,
+        });
+      }
+      if (added === 0) break;
+    }
+  }
+  return out;
+}
+
 const ADAPTERS: Record<ATS, (c: CompanyConfig) => Promise<Job[]>> = {
   greenhouse,
   lever,
@@ -224,6 +369,9 @@ const ADAPTERS: Record<ATS, (c: CompanyConfig) => Promise<Job[]>> = {
   workday,
   smartrecruiters,
   icims,
+  microsoft,
+  amazon,
+  google,
 };
 
 /* --------------------------- aggregation -------------------------- */

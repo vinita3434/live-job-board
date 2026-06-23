@@ -1,4 +1,13 @@
-export type ATS = "greenhouse" | "lever" | "ashby" | "workday" | "smartrecruiters" | "icims";
+export type ATS =
+  | "greenhouse"
+  | "lever"
+  | "ashby"
+  | "workday"
+  | "smartrecruiters"
+  | "icims"
+  | "microsoft"
+  | "amazon"
+  | "google";
 
 export interface WorkdayConfig {
   /** full myworkdayjobs host, e.g. "salesforce.wd12.myworkdayjobs.com" */

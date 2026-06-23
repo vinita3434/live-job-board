@@ -64,6 +64,36 @@ export const COMPANIES: CompanyConfig[] = [
   { name: "Salesforce",  ats: "workday",    slug: "salesforce",       category: "Big Tech",   // [VERIFIED]
     workday: { host: "salesforce.wd12.myworkdayjobs.com", tenant: "salesforce", site: "External_Career_Site" } },
   { name: "Snowflake",   ats: "greenhouse", slug: "snowflake",        category: "Big Tech" }, // [guess]
+  // -- incumbents on Workday --
+  { name: "NVIDIA",      ats: "workday",    slug: "nvidia",           category: "Big Tech",   // [VERIFIED]
+    workday: { host: "nvidia.wd5.myworkdayjobs.com", tenant: "nvidia", site: "NVIDIAExternalCareerSite" } },
+  { name: "Adobe",       ats: "workday",    slug: "adobe",            category: "Big Tech",   // [VERIFIED]
+    workday: { host: "adobe.wd5.myworkdayjobs.com", tenant: "adobe", site: "external_experienced" } },
+  { name: "Intel",       ats: "workday",    slug: "intel",            category: "Big Tech",   // [VERIFIED]
+    workday: { host: "intel.wd1.myworkdayjobs.com", tenant: "intel", site: "External" } },
+  // -- proprietary career sites (custom adapters) --
+  { name: "Microsoft",   ats: "microsoft",  slug: "microsoft",        category: "Big Tech" }, // [VERIFIED]
+  { name: "Amazon",      ats: "amazon",     slug: "amazon",           category: "Big Tech" }, // [VERIFIED] (covers AWS)
+  { name: "Google",      ats: "google",     slug: "google",           category: "Big Tech" }, // [VERIFIED]
+  // -- public tech on Greenhouse --
+  { name: "Airbnb",      ats: "greenhouse", slug: "airbnb",           category: "Big Tech" }, // [VERIFIED]
+  { name: "Datadog",     ats: "greenhouse", slug: "datadog",          category: "Big Tech" }, // [VERIFIED]
+  { name: "MongoDB",     ats: "greenhouse", slug: "mongodb",          category: "Big Tech" }, // [VERIFIED]
+  { name: "DoorDash",    ats: "greenhouse", slug: "doordashusa",      category: "Big Tech" }, // [VERIFIED]
+  { name: "Samsara",     ats: "greenhouse", slug: "samsara",          category: "Big Tech" }, // [VERIFIED]
+  { name: "Roblox",      ats: "greenhouse", slug: "roblox",           category: "Big Tech" }, // [VERIFIED]
+  { name: "Unity",       ats: "greenhouse", slug: "unity3d",          category: "Big Tech" }, // [VERIFIED]
+  { name: "Elastic",     ats: "greenhouse", slug: "elastic",          category: "Big Tech" }, // [VERIFIED]
+  { name: "Cloudflare",  ats: "greenhouse", slug: "cloudflare",       category: "Big Tech" }, // [VERIFIED]
+  { name: "Pinterest",   ats: "greenhouse", slug: "pinterest",        category: "Big Tech" }, // [VERIFIED]
+  { name: "Reddit",      ats: "greenhouse", slug: "reddit",           category: "Big Tech" }, // [VERIFIED]
+  { name: "Instacart",   ats: "greenhouse", slug: "instacart",        category: "Big Tech" }, // [VERIFIED]
+  { name: "Lyft",        ats: "greenhouse", slug: "lyft",             category: "Big Tech" }, // [VERIFIED]
+  { name: "Twilio",      ats: "greenhouse", slug: "twilio",           category: "Big Tech" }, // [VERIFIED]
+  { name: "GitLab",      ats: "greenhouse", slug: "gitlab",           category: "Big Tech" }, // [VERIFIED]
+  { name: "Asana",       ats: "greenhouse", slug: "asana",            category: "Big Tech" }, // [VERIFIED]
+  { name: "Discord",     ats: "greenhouse", slug: "discord",          category: "Big Tech" }, // [VERIFIED]
+  { name: "Dropbox",     ats: "greenhouse", slug: "dropbox",          category: "Big Tech" }, // [VERIFIED]
 
   // ======================= B2B AI Startups =========================
   { name: "Glean",       ats: "greenhouse", slug: "gleanwork",        category: "B2B AI Startups" }, // [VERIFIED]
@@ -82,6 +112,44 @@ export const COMPANIES: CompanyConfig[] = [
   { name: "Cohere",      ats: "ashby",      slug: "cohere",           category: "Frontier Labs" }, // [guess]
   { name: "Mistral AI",  ats: "lever",      slug: "mistral",          category: "Frontier Labs" }, // [VERIFIED]
 
+  // ============================ Fintech ============================
+  { name: "Stripe",      ats: "greenhouse", slug: "stripe",           category: "Fintech" }, // [VERIFIED]
+  { name: "Brex",        ats: "greenhouse", slug: "brex",             category: "Fintech" }, // [VERIFIED]
+  { name: "Ramp",        ats: "ashby",      slug: "ramp",             category: "Fintech" }, // [VERIFIED]
+  { name: "Mercury",     ats: "greenhouse", slug: "mercury",          category: "Fintech" }, // [VERIFIED]
+  { name: "Chime",       ats: "greenhouse", slug: "chime",            category: "Fintech" }, // [VERIFIED]
+  { name: "Affirm",      ats: "greenhouse", slug: "affirm",           category: "Fintech" }, // [VERIFIED]
+  { name: "Coinbase",    ats: "greenhouse", slug: "coinbase",         category: "Fintech" }, // [VERIFIED]
+  { name: "Robinhood",   ats: "greenhouse", slug: "robinhood",        category: "Fintech" }, // [VERIFIED]
+  { name: "Adyen",       ats: "greenhouse", slug: "adyen",            category: "Fintech" }, // [VERIFIED]
+  { name: "Marqeta",     ats: "greenhouse", slug: "marqeta",          category: "Fintech" }, // [VERIFIED]
+  { name: "Bill",        ats: "greenhouse", slug: "billcom",          category: "Fintech" }, // [VERIFIED]
+  { name: "Modern Treasury", ats: "ashby",  slug: "moderntreasury",   category: "Fintech" }, // [VERIFIED]
+  { name: "Deel",        ats: "ashby",      slug: "deel",             category: "Fintech" }, // [VERIFIED]
+  { name: "Gusto",       ats: "greenhouse", slug: "gusto",            category: "Fintech" }, // [VERIFIED]
+  { name: "Navan",       ats: "greenhouse", slug: "tripactions",      category: "Fintech" }, // [VERIFIED]
+  { name: "Alloy",       ats: "greenhouse", slug: "alloy",            category: "Fintech" }, // [VERIFIED]
+  { name: "Socure",      ats: "ashby",      slug: "socure",           category: "Fintech" }, // [VERIFIED]
+  { name: "Block (Square)", ats: "smartrecruiters", slug: "Square",   category: "Fintech" }, // [guess] confirm via Sources
+
+  // ====================== Data & Analytics =========================
+  { name: "Fivetran",    ats: "greenhouse", slug: "fivetran",         category: "Data & Analytics" }, // [VERIFIED]
+  { name: "dbt Labs",    ats: "greenhouse", slug: "dbtlabsinc",       category: "Data & Analytics" }, // [VERIFIED]
+  { name: "Airbyte",     ats: "ashby",      slug: "airbyte",          category: "Data & Analytics" }, // [VERIFIED]
+  { name: "Starburst",   ats: "greenhouse", slug: "starburst",        category: "Data & Analytics" }, // [VERIFIED]
+  { name: "ClickHouse",  ats: "ashby",      slug: "clickhouse",       category: "Data & Analytics" }, // [VERIFIED]
+  { name: "MotherDuck",  ats: "ashby",      slug: "motherduck",       category: "Data & Analytics" }, // [VERIFIED]
+  { name: "Sigma Computing", ats: "greenhouse", slug: "sigmacomputing", category: "Data & Analytics" }, // [VERIFIED]
+  { name: "Hightouch",   ats: "greenhouse", slug: "hightouch",        category: "Data & Analytics" }, // [VERIFIED]
+  { name: "Atlan",       ats: "ashby",      slug: "atlan",            category: "Data & Analytics" }, // [VERIFIED]
+  { name: "Hex",         ats: "greenhouse", slug: "hextechnologies",  category: "Data & Analytics" }, // [VERIFIED]
+  { name: "Cribl",       ats: "greenhouse", slug: "cribl",            category: "Data & Analytics" }, // [VERIFIED]
+  { name: "Redpanda",    ats: "greenhouse", slug: "redpandadata",     category: "Data & Analytics" }, // [VERIFIED]
+  { name: "Astronomer",  ats: "ashby",      slug: "astronomer",       category: "Data & Analytics" }, // [VERIFIED]
+  { name: "Dremio",      ats: "greenhouse", slug: "dremio",           category: "Data & Analytics" }, // [VERIFIED]
+  { name: "Materialize", ats: "ashby",      slug: "materialize",      category: "Data & Analytics" }, // [VERIFIED]
+  { name: "Dagster",     ats: "greenhouse", slug: "dagsterlabs",      category: "Data & Analytics" }, // [VERIFIED] (empty board ok)
+
   // iCIMS example (no company here uses it). Shape:
   // { name: "Acme", ats: "icims", slug: "acme", category: "Big Tech", icims: { host: "careers-acme.icims.com" } },
 ];
@@ -92,6 +160,8 @@ export const CATEGORY_ORDER = [
   "Big Tech",
   "B2B AI Startups",
   "Frontier Labs",
+  "Fintech",
+  "Data & Analytics",
 ];
 
 /* INCLUDE — a role is shown only if its title contains one of these. */

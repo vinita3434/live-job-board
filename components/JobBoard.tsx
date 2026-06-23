@@ -41,6 +41,7 @@ function matchInclude(title: string, kws: string[], on: boolean): boolean {
 const PREFS_KEY = "goodput:prefs";
 const ATS_LABEL: Record<string, string> = {
   greenhouse: "GH", lever: "LV", ashby: "AS", workday: "WD", smartrecruiters: "SR", icims: "IC",
+  microsoft: "MS", amazon: "AMZ", google: "GOOG",
 };
 
 /* ============================= board ============================== */
