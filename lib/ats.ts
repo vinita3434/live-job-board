@@ -154,6 +154,55 @@ async function smartrecruiters(c: CompanyConfig): Promise<Job[]> {
   return out;
 }
 
+/* Gem: public GraphQL API behind jobs.gem.com/<slug>. slug = the vanity path.
+ * The career page is a JS shell; this is the same query it runs client-side. */
+const GEM_JOB_BOARD_QUERY = `query JobBoardList($boardId: String!) {
+  oatsExternalJobPostings(boardId: $boardId) {
+    jobPostings {
+      id
+      extId
+      title
+      locations { name city isoCountry isRemote }
+      job { department { name } locationType employmentType }
+    }
+  }
+}`;
+
+async function gem(c: CompanyConfig): Promise<Job[]> {
+  const res = await fetch("https://jobs.gem.com/api/public/graphql", {
+    method: "POST",
+    ...RV,
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({
+      query: GEM_JOB_BOARD_QUERY,
+      variables: { boardId: c.slug },
+    }),
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = await res.json();
+  if (data.errors?.length) throw new Error(data.errors[0]?.message ?? "graphql error");
+  const postings = data.data?.oatsExternalJobPostings?.jobPostings ?? [];
+  return postings.map((j: any) => {
+    const loc = (j.locations ?? [])
+      .map((l: any) =>
+        [l.city, l.name].filter(Boolean).join(", ") + (l.isRemote ? " (remote)" : "")
+      )
+      .filter(Boolean)
+      .join("; ");
+    return {
+      id: `gem-${c.slug}-${j.extId ?? j.id}`,
+      title: j.title ?? "Untitled role",
+      company: c.name,
+      companyId: companyId(c),
+      category: c.category ?? "",
+      location: loc,
+      department: j.job?.department?.name ?? "",
+      url: `https://jobs.gem.com/${encodeURIComponent(c.slug)}/${j.extId ?? j.id}`,
+      updatedAt: null,
+    };
+  });
+}
+
 /* iCIMS has no public JSON API — its career sites are server-rendered HTML.
  * This adapter fetches the in-iframe search page and parses job anchors.
  * It is the most fragile adapter: no location/date in the list view, and
@@ -368,6 +417,7 @@ const ADAPTERS: Record<ATS, (c: CompanyConfig) => Promise<Job[]>> = {
   ashby,
   workday,
   smartrecruiters,
+  gem,
   icims,
   microsoft,
   amazon,

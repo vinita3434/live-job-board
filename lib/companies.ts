@@ -21,7 +21,7 @@ export const COMPANIES: CompanyConfig[] = [
   { name: "Cerebras",    ats: "greenhouse", slug: "cerebrassystems",  category: "AI Infra" }, // [VERIFIED]
   { name: "Tenstorrent", ats: "greenhouse", slug: "tenstorrent",      category: "AI Infra" }, // [VERIFIED]
   { name: "MatX",        ats: "greenhouse", slug: "matx",             category: "AI Infra" }, // [VERIFIED]
-  { name: "Groq",        ats: "greenhouse", slug: "groq",             category: "AI Infra" }, // [guess]
+  { name: "Groq",        ats: "gem",        slug: "groq",             category: "AI Infra" }, // [VERIFIED] Gem
   { name: "SambaNova",   ats: "greenhouse", slug: "sambanovasystems", category: "AI Infra" }, // [guess]
   { name: "d-Matrix",    ats: "lever",      slug: "dmatrix",          category: "AI Infra" }, // [guess]
   { name: "Etched",      ats: "ashby",      slug: "etched",           category: "AI Infra" }, // [guess]

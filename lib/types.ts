@@ -4,6 +4,7 @@ export type ATS =
   | "ashby"
   | "workday"
   | "smartrecruiters"
+  | "gem"
   | "icims"
   | "microsoft"
   | "amazon"
