@@ -1,5 +1,6 @@
 import type { ATS, CompanyConfig, Job, SourceStatus, BoardData } from "./types";
-import { COMPANIES, REVALIDATE_SECONDS } from "./companies";
+import { COMPANIES, REVALIDATE_SECONDS, ROLE_KEYWORDS, EXCLUDE_KEYWORDS } from "./companies";
+import { isRelevantRole } from "./filter";
 
 export const companyId = (c: { ats: ATS; slug: string }) => `${c.ats}:${c.slug}`;
 
@@ -478,8 +479,13 @@ export async function getBoard(): Promise<BoardData> {
       category: c.category ?? "",
     };
     if (r.status === "fulfilled") {
-      jobs.push(...r.value);
-      sources.push({ ...base, ok: true, count: r.value.length });
+      // Pre-filter to relevant roles so the client gets a few hundred jobs, not
+      // ~20k. `count` stays the RAW board size — a truer source-health signal.
+      const relevant = r.value.filter((j) =>
+        isRelevantRole(j.title, ROLE_KEYWORDS, EXCLUDE_KEYWORDS)
+      );
+      jobs.push(...relevant);
+      sources.push({ ...base, ok: true, count: r.value.length, matched: relevant.length });
     } else {
       const msg = r.reason instanceof Error ? r.reason.message : "fetch failed";
       sources.push({ ...base, ok: false, count: 0, error: msg });

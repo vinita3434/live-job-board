@@ -1,5 +1,4 @@
 import { getBoard } from "@/lib/ats";
-import { ROLE_KEYWORDS } from "@/lib/companies";
 import JobBoard from "@/components/JobBoard";
 
 // Render per request on Vercel; per-source responses stay cached.
@@ -12,5 +11,5 @@ export default async function Page() {
   } catch {
     board = { jobs: [], sources: [], fetchedAt: new Date().toISOString() };
   }
-  return <JobBoard initial={board} defaultKeywords={ROLE_KEYWORDS} />;
+  return <JobBoard initial={board} />;
 }

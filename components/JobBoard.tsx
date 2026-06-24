@@ -2,7 +2,8 @@
 
 import { useState, useMemo, useEffect, useCallback } from "react";
 import type { BoardData, Job } from "@/lib/types";
-import { CATEGORY_ORDER, SECTION_BLURB, EXCLUDE_KEYWORDS } from "@/lib/companies";
+import { CATEGORY_ORDER, SECTION_BLURB } from "@/lib/companies";
+import { containsAny } from "@/lib/filter";
 
 /* --------------------------- helpers ------------------------------ */
 function relTime(iso: string | null): string {
@@ -20,22 +21,6 @@ function isNew(iso: string | null): boolean {
   if (!iso) return false;
   const d = Date.parse(iso);
   return !Number.isNaN(d) && Date.now() - d < 7 * 86400000;
-}
-function containsAny(title: string, list: string[]): boolean {
-  const t = title.toLowerCase();
-  return list.some((k) => {
-    const kk = k.toLowerCase().trim();
-    if (!kk) return false;
-    if (kk.length <= 3) {
-      const esc = kk.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      return new RegExp(`\\b${esc}\\b`).test(t);
-    }
-    return t.includes(kk);
-  });
-}
-function matchInclude(title: string, kws: string[], on: boolean): boolean {
-  if (!on || kws.length === 0) return true;
-  return containsAny(title, kws);
 }
 
 /* Derive a seniority level from the title (ATS feeds rarely expose one). */
@@ -65,21 +50,14 @@ function linkedInUrl(j: Job): string {
   return `https://www.linkedin.com/jobs/search/?keywords=${q}`;
 }
 
-const PREFS_KEY = "goodput:prefs";
+const PREFS_KEY = "goodput:prefs:v2";
 
 /* ============================= board ============================== */
-export default function JobBoard({
-  initial,
-  defaultKeywords,
-}: {
-  initial: BoardData;
-  defaultKeywords: string[];
-}) {
+export default function JobBoard({ initial }: { initial: BoardData }) {
   const [board, setBoard] = useState<BoardData>(initial);
   const [busy, setBusy] = useState(false);
   const [search, setSearch] = useState("");
-  const [keywords, setKeywords] = useState<string[]>(defaultKeywords);
-  const [keywordOn, setKeywordOn] = useState(true);
+  const [refineKw, setRefineKw] = useState<string[]>([]); // optional extra narrowing
   const [newOnly, setNewOnly] = useState(false);
   const [sort, setSort] = useState<"recent" | "company" | "title">("recent");
   const [section, setSection] = useState<string | null>(null); // null = landing
@@ -92,8 +70,7 @@ export default function JobBoard({
       const raw = localStorage.getItem(PREFS_KEY);
       if (raw) {
         const p = JSON.parse(raw);
-        if (Array.isArray(p.keywords)) setKeywords(p.keywords);
-        if (typeof p.keywordOn === "boolean") setKeywordOn(p.keywordOn);
+        if (Array.isArray(p.refineKw)) setRefineKw(p.refineKw);
         if (p.excluded) setExcluded(p.excluded);
         if (p.sort) setSort(p.sort);
       }
@@ -101,9 +78,9 @@ export default function JobBoard({
   }, []);
   useEffect(() => {
     try {
-      localStorage.setItem(PREFS_KEY, JSON.stringify({ keywords, keywordOn, excluded, sort }));
+      localStorage.setItem(PREFS_KEY, JSON.stringify({ refineKw, excluded, sort }));
     } catch {}
-  }, [keywords, keywordOn, excluded, sort]);
+  }, [refineKw, excluded, sort]);
 
   const refresh = useCallback(async () => {
     setBusy(true);
@@ -117,13 +94,13 @@ export default function JobBoard({
   const okSources = board.sources.filter((s) => s.ok);
   const errSources = board.sources.filter((s) => !s.ok);
 
-  // include/exclude/search/new — independent of which section is open
+  // The server already pre-filtered to relevant roles; here we only apply the
+  // user's optional narrowing: hidden companies, refine keywords, search, new.
   const baseFiltered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return board.jobs.filter((j) => {
       if (excluded[j.companyId]) return false;
-      if (!matchInclude(j.title, keywords, keywordOn)) return false;
-      if (containsAny(j.title, EXCLUDE_KEYWORDS)) return false;
+      if (refineKw.length && !containsAny(j.title, refineKw)) return false;
       if (newOnly && !isNew(j.updatedAt)) return false;
       if (q) {
         const hay = `${j.title} ${j.location} ${j.company} ${j.department} ${j.category}`.toLowerCase();
@@ -131,7 +108,7 @@ export default function JobBoard({
       }
       return true;
     });
-  }, [board.jobs, excluded, search, keywords, keywordOn, newOnly]);
+  }, [board.jobs, excluded, search, refineKw, newOnly]);
 
   // per-section stats for the landing cards
   const sectionStats = useMemo(() => {
@@ -159,7 +136,7 @@ export default function JobBoard({
 
   const addKw = () => {
     const k = kwDraft.trim().toLowerCase();
-    if (k && !keywords.includes(k)) setKeywords([...keywords, k]);
+    if (k && !refineKw.includes(k)) setRefineKw([...refineKw, k]);
     setKwDraft("");
   };
 
@@ -169,7 +146,7 @@ export default function JobBoard({
         <button className="brand" onClick={() => setSection(null)} title="Back to sections">
           <span className="pulse" aria-hidden />
           <span className="word">goodput</span>
-          <span className="sub">live roles across your target stack</span>
+          <span className="sub">live PM &amp; strategy roles across your target stack</span>
         </button>
         <div className="head-right">
           <span className="meta">{okSources.length} sources · {baseFiltered.length} roles</span>
@@ -201,7 +178,7 @@ export default function JobBoard({
                 </div>
                 <p className="sc-blurb">{SECTION_BLURB[cat] ?? ""}</p>
                 <div className="sc-foot">
-                  <span className="sc-cos">{st.companies.size} companies</span>
+                  <span className="sc-cos">{st.companies.size} companies hiring</span>
                   {sample.length > 0 && <span className="sc-sample">{sample.join(" · ")}{st.companies.size > 5 ? " …" : ""}</span>}
                 </div>
                 <span className="sc-go" aria-hidden>→</span>
@@ -224,9 +201,6 @@ export default function JobBoard({
               />
               {search && <button className="search-x" onClick={() => setSearch("")}>×</button>}
             </div>
-            <button className={`toggle ${keywordOn ? "on" : ""}`} onClick={() => setKeywordOn((v) => !v)}>
-              Role filter {keywordOn ? "on" : "off"}
-            </button>
             <button className={`toggle ${newOnly ? "on" : ""}`} onClick={() => setNewOnly((v) => !v)}>
               New · 7d
             </button>
@@ -239,25 +213,24 @@ export default function JobBoard({
             </label>
           </section>
 
-          {keywordOn && (
-            <div className="kw">
-              {keywords.map((k) => (
-                <span key={k} className="kw-chip">
-                  {k}
-                  <button onClick={() => setKeywords(keywords.filter((x) => x !== k))} aria-label={`Remove ${k}`}>×</button>
-                </span>
-              ))}
-              <input
-                className="kw-input"
-                value={kwDraft}
-                onChange={(e) => setKwDraft(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter") addKw(); }}
-                onBlur={addKw}
-                placeholder="+ keyword"
-                aria-label="Add keyword"
-              />
-            </div>
-          )}
+          <div className="kw">
+            <span className="kw-label">Refine:</span>
+            {refineKw.map((k) => (
+              <span key={k} className="kw-chip">
+                {k}
+                <button onClick={() => setRefineKw(refineKw.filter((x) => x !== k))} aria-label={`Remove ${k}`}>×</button>
+              </span>
+            ))}
+            <input
+              className="kw-input"
+              value={kwDraft}
+              onChange={(e) => setKwDraft(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") addKw(); }}
+              onBlur={addKw}
+              placeholder={refineKw.length ? "+ keyword" : "e.g. product manager"}
+              aria-label="Add refine keyword"
+            />
+          </div>
 
           <div className="sources">
             <button className="sources-toggle" onClick={() => setSourcesOpen((v) => !v)}>
@@ -272,11 +245,13 @@ export default function JobBoard({
                     key={s.id}
                     className={`chip ${excluded[s.id] ? "off" : ""}`}
                     onClick={() => setExcluded((e) => ({ ...e, [s.id]: !e[s.id] }))}
-                    title={excluded[s.id] ? "Show roles" : "Hide roles"}
+                    title={s.ok ? `${s.matched ?? 0} relevant of ${s.count} total — click to ${excluded[s.id] ? "show" : "hide"}` : s.error}
                   >
                     <span className={`dot ${s.ok ? "ok" : "err"}`} />
                     <span className="chip-name">{s.name}</span>
-                    {s.ok ? <span className="chip-count">{s.count}</span> : <span className="chip-err">{s.error}</span>}
+                    {s.ok
+                      ? <span className="chip-count">{s.matched ?? 0}<i>/{s.count}</i></span>
+                      : <span className="chip-err">{s.error}</span>}
                   </button>
                 ))}
               </div>
@@ -287,7 +262,7 @@ export default function JobBoard({
             {rows.length === 0 ? (
               <div className="empty">
                 <p className="empty-h">No roles match right now.</p>
-                <p className="empty-p">Clear the search, turn off the role filter, or head back to another section.</p>
+                <p className="empty-p">Clear the search or refine keywords, or head back to another section.</p>
                 <button className="btn" onClick={() => setSection(null)}>← All sections</button>
               </div>
             ) : (
@@ -298,9 +273,9 @@ export default function JobBoard({
       )}
 
       <footer className="foot">
-        Pulls public ATS endpoints server-side (Greenhouse · Lever · Ashby · SmartRecruiters · Workday · Gem · iCIMS).
-        Curate companies, sections, and the role include/exclude lists in <code>lib/companies.ts</code>, then redeploy.
-        Level and experience are inferred from the title and JD; senior, VP, and engineering titles are filtered out by default.
+        Pulls public ATS endpoints server-side (Greenhouse · Lever · Ashby · SmartRecruiters · Workday · Gem · iCIMS)
+        and pre-filters to PM / strategy / BizOps roles before they reach your browser. Curate companies and the
+        include/exclude lists in <code>lib/companies.ts</code>. Level and experience are inferred from the title and JD.
       </footer>
     </div>
   );
@@ -332,7 +307,7 @@ function JobCard({ j }: { j: Job }) {
       </div>
 
       <div className="badges">
-        {level && <span className={`badge lvl ${level === "Entry-level" ? "lo" : level === "Mid-level" ? "mid" : level === "Internship" ? "lo" : "hi"}`}>{level}</span>}
+        {level && <span className={`badge lvl ${level === "Entry-level" || level === "Internship" ? "lo" : level === "Mid-level" ? "mid" : "hi"}`}>{level}</span>}
         {exp && <span className="badge exp">{exp}</span>}
         {j.employmentType && <span className="badge type">{j.employmentType}</span>}
         {!level && !exp && <span className="badge muted">level not stated</span>}

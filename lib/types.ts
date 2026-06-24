@@ -55,7 +55,10 @@ export interface SourceStatus {
   slug: string;
   category: string;
   ok: boolean;
+  /** raw number of postings the source returned (health signal) */
   count: number;
+  /** how many of those passed the relevance filter (0 if none/errored) */
+  matched?: number;
   error?: string;
 }
 
