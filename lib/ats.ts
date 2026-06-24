@@ -104,38 +104,50 @@ async function workday(c: CompanyConfig): Promise<Job[]> {
   const wd = c.workday;
   if (!wd) throw new Error("missing workday config");
   const endpoint = `https://${wd.host}/wday/cxs/${wd.tenant}/${wd.site}/jobs`;
+  const seen = new Set<string>();
   const out: Job[] = [];
   const limit = 20;
-  let offset = 0;
-  let total = Infinity;
-  for (let page = 0; page < 10 && offset < total; page++) {
-    const res = await fetch(endpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
-      body: JSON.stringify({ appliedFacets: {}, limit, offset, searchText: "" }),
-      cache: "no-store",
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    total = data.total ?? 0;
-    const postings = data.jobPostings ?? [];
-    for (const p of postings) {
-      out.push({
-        id: `wd-${wd.tenant}-${p.externalPath ?? p.title}`,
-        title: p.title ?? "Untitled role",
-        company: c.name,
-        companyId: companyId(c),
-        category: c.category ?? "",
-        location: p.locationsText ?? "",
-        department: "",
-        url: `https://${wd.host}/en-US/${wd.site}${p.externalPath ?? ""}`,
-        updatedAt: parseWorkdayPostedOn(p.postedOn),
-        description: "",
-        employmentType: "",
+  // Enterprise Workday boards have thousands of jobs; a blind paginated fetch
+  // only sees the first ~200 and misses the PM/strategy roles. Instead run the
+  // same keyword queries the board filters on, so relevant roles surface.
+  let first = true;
+  for (const q of CUSTOM_QUERIES) {
+    for (let page = 0; page < 2; page++) {
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ appliedFacets: {}, limit, offset: page * limit, searchText: q }),
+        cache: "no-store",
       });
+      // Surface a bad host/tenant/site as a source error, but don't let one
+      // empty query kill the rest.
+      if (!res.ok) {
+        if (first) throw new Error(`HTTP ${res.status}`);
+        break;
+      }
+      first = false;
+      const data = await res.json();
+      const postings = data.jobPostings ?? [];
+      for (const p of postings) {
+        const key = p.externalPath ?? p.title;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        out.push({
+          id: `wd-${wd.tenant}-${key}`,
+          title: p.title ?? "Untitled role",
+          company: c.name,
+          companyId: companyId(c),
+          category: c.category ?? "",
+          location: p.locationsText ?? "",
+          department: "",
+          url: `https://${wd.host}/en-US/${wd.site}${p.externalPath ?? ""}`,
+          updatedAt: parseWorkdayPostedOn(p.postedOn),
+          description: "",
+          employmentType: "",
+        });
+      }
+      if (postings.length < limit) break;
     }
-    if (postings.length < limit) break;
-    offset += limit;
   }
   return out;
 }
@@ -301,12 +313,14 @@ async function icims(c: CompanyConfig): Promise<Job[]> {
  * adapters query a small set of role keywords, paginate a little, then merge
  * + dedupe. Endpoints are public but undocumented — confirm at build time. */
 const CUSTOM_QUERIES = [
-  "product manager",
+  "product manager",        // also matches Associate/Junior Product Manager
   "program manager",
   "product operations",
   "business analyst",
   "strategy and operations",
   "forward deployed",
+  "ai strategy",            // AI-transformation / strategy roles at big orgs
+  "ai transformation",
 ];
 const CUSTOM_MAX_PAGES = 2;
 

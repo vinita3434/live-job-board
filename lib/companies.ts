@@ -131,6 +131,17 @@ export const COMPANIES: CompanyConfig[] = [
   { name: "Ironclad",    ats: "ashby",      slug: "ironcladhq",       category: "Big Tech" }, // [VERIFIED]
   { name: "Canva",       ats: "smartrecruiters", slug: "canva",       category: "Big Tech" }, // [VERIFIED]
   { name: "Squarespace", ats: "greenhouse", slug: "squarespace",      category: "Big Tech" }, // [VERIFIED]
+  // -- enterprise / incumbents on Workday --
+  { name: "Comcast",     ats: "workday",    slug: "comcast",          category: "Big Tech",   // [VERIFIED]
+    workday: { host: "comcast.wd5.myworkdayjobs.com", tenant: "comcast", site: "Comcast_Careers" } },
+  { name: "Target",      ats: "workday",    slug: "target",           category: "Big Tech",   // [VERIFIED]
+    workday: { host: "target.wd5.myworkdayjobs.com", tenant: "target", site: "targetcareers" } },
+  { name: "T-Mobile",    ats: "workday",    slug: "tmobile",          category: "Big Tech",   // [VERIFIED]
+    workday: { host: "tmobile.wd1.myworkdayjobs.com", tenant: "tmobile", site: "External" } },
+  { name: "Workday",     ats: "workday",    slug: "workday",          category: "Big Tech",   // [VERIFIED]
+    workday: { host: "workday.wd5.myworkdayjobs.com", tenant: "workday", site: "Workday" } },
+  { name: "HPE",         ats: "workday",    slug: "hpe",              category: "Big Tech",   // [VERIFIED]
+    workday: { host: "hpe.wd5.myworkdayjobs.com", tenant: "hpe", site: "Jobsathpe" } },
 
   // ======================= B2B AI Startups =========================
   { name: "Glean",       ats: "greenhouse", slug: "gleanwork",        category: "AI Startups" }, // [VERIFIED]
@@ -189,6 +200,23 @@ export const COMPANIES: CompanyConfig[] = [
   { name: "Block (Square)", ats: "smartrecruiters", slug: "Square",   category: "Fintech" }, // [guess] confirm via Sources
   { name: "Plaid",       ats: "ashby",      slug: "plaid",            category: "Fintech" }, // [VERIFIED]
   { name: "Carta",       ats: "greenhouse", slug: "carta",            category: "Fintech" }, // [VERIFIED]
+  // -- enterprise finance on Workday --
+  { name: "BlackRock",   ats: "workday",    slug: "blackrock",        category: "Fintech",   // [VERIFIED]
+    workday: { host: "blackrock.wd1.myworkdayjobs.com", tenant: "blackrock", site: "BlackRock_Professional" } },
+  { name: "Mastercard",  ats: "workday",    slug: "mastercard",       category: "Fintech",   // [VERIFIED]
+    workday: { host: "mastercard.wd1.myworkdayjobs.com", tenant: "mastercard", site: "CorporateCareers" } },
+  { name: "Citi",        ats: "workday",    slug: "citi",             category: "Fintech",   // [VERIFIED]
+    workday: { host: "citi.wd5.myworkdayjobs.com", tenant: "citi", site: "2" } },
+  { name: "Capital One", ats: "workday",    slug: "capitalone",       category: "Fintech",   // [VERIFIED]
+    workday: { host: "capitalone.wd12.myworkdayjobs.com", tenant: "capitalone", site: "Capital_One" } },
+  { name: "Morgan Stanley", ats: "workday", slug: "morganstanley",    category: "Fintech",   // [VERIFIED]
+    workday: { host: "ms.wd5.myworkdayjobs.com", tenant: "ms", site: "External" } },
+  { name: "State Street",ats: "workday",    slug: "statestreet",      category: "Fintech",   // [VERIFIED]
+    workday: { host: "statestreet.wd1.myworkdayjobs.com", tenant: "statestreet", site: "Global" } },
+  { name: "Nasdaq",      ats: "workday",    slug: "nasdaq",           category: "Fintech",   // [VERIFIED]
+    workday: { host: "nasdaq.wd1.myworkdayjobs.com", tenant: "nasdaq", site: "Global_External_Site" } },
+  { name: "PayPal",      ats: "workday",    slug: "paypal",           category: "Fintech",   // [VERIFIED]
+    workday: { host: "paypal.wd1.myworkdayjobs.com", tenant: "paypal", site: "jobs" } },
 
   // ====================== Data & Analytics =========================
   { name: "Fivetran",    ats: "greenhouse", slug: "fivetran",         category: "AI Infra" }, // [VERIFIED]
