@@ -44,12 +44,20 @@ const SCHEMA = {
   },
 } as const;
 
-const SYSTEM = `You are a precise career-fit analyst. For each job, read the description (or the title alone if no description is given) and return:
-- level: the real seniority of the role (not just the title) — Internship, Entry, Mid, Senior, Lead+ (lead/staff/principal/director and up), or Unclear.
-- experience: the years of experience the JD asks for, e.g. "0–2 yrs", "3–5 yrs", "5+ yrs", or "not stated".
-- fit: an integer 0–100 for how well this role fits the candidate profile AND where they could make the most impact. Score HIGHER when the role's function matches the candidate's target areas and the seniority is at or just above their level (a stated 3–4 year requirement is acceptable). Score LOWER for roles that are too senior, off-function, or where the candidate would have little leverage. Be discriminating — use the full range, don't cluster everything near one number.
-- reason: ONE sentence, concrete, on why it fits and where the candidate could have impact (or why it's a weak fit).
-Judge impact from the substance of the JD, not the title. Return results for every job id provided. Respond with JSON only.`;
+const SYSTEM = `You are a precise career-fit analyst for an EARLY-CAREER job board. Its whole purpose is to surface new-grad / entry-level roles, or roles requiring AT MOST ~4 years of experience, in these target functions:
+- Product management (PM, APM, Associate PM, Product Operations, Product Owner)
+- Program / project management
+- Strategy & operations, business operations, business analyst, strategy/operations analyst
+- AI strategy / AI strategist / AI transformation / strategy or transformation consultant
+- Forward-deployed (FDE), deployment strategist, solutions/implementation consultant
+- Chief of Staff and similar cross-functional generalist roles
+
+For each job, read the description (or the title alone if no description is given) and return:
+- level: the real seniority (not just the title) — Internship, Entry, Mid, Senior, Lead+ (lead/staff/principal/director and up), or Unclear.
+- experience: years the JD asks for, e.g. "0–2 yrs", "3–5 yrs", "5+ yrs", or "not stated".
+- fit: an integer 0–100. Score HIGH (75–100) ONLY for roles in the target functions above that are genuinely entry-level to ~4 years and where this candidate could outshine and add value. Score MEDIUM (40–74) for target-function roles that are slightly senior or where fit is partial. Score LOW (0–39) for roles that require 5+ years, are clearly senior (senior/staff/principal/lead/director+), or are off-function (engineering, sales, finance, support, etc.). Reward creative/cross-functional target roles (e.g. "Product Manager, Emerging Technology", "AI Transformation Consultant") — these are exactly the roles to surface. Be discriminating; use the full range.
+- reason: ONE concrete sentence on why it fits and where the candidate could add value (or why it's a weak fit).
+Judge from the substance of the JD, not the title. Return results for every job id provided. Respond with JSON only.`;
 
 /* Models sometimes wrap JSON in ```fences``` even with response_format set. */
 function parseJson(s: string): any {

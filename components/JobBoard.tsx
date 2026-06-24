@@ -53,7 +53,7 @@ function linkedInUrl(j: Job): string {
 const PREFS_KEY = "goodput:prefs:v2";
 const PROFILE_KEY = "goodput:profile";
 const DEFAULT_PROFILE =
-  "Early-career (0–3 years). Targeting AI strategy, product management, program management, business/strategy & operations, and forward-deployed / consulting roles at AI and tech companies. I want roles where I can shape strategy and have high impact early. Mid-level or below; a stated 3–4 year requirement is fine.";
+  "New-grad / early-career (0–4 years max). Targeting entry-level roles in: product management (PM/APM/Associate PM, product operations), program management, strategy & operations, business operations, business analyst / strategy analyst, AI strategy / AI strategist, AI transformation & strategy consulting, forward-deployed (FDE) / deployment strategist, and Chief of Staff. I thrive in creative, cross-functional roles where I can shape strategy and outshine early. Exclude anything requiring 5+ years or senior/lead/director titles, and engineering/sales roles.";
 
 /* per-job analysis returned by /api/analyze */
 interface Analysis {
@@ -82,6 +82,7 @@ export default function JobBoard({ initial }: { initial: BoardData }) {
   const [analysis, setAnalysis] = useState<Record<string, Analysis>>({});
   const [analyzing, setAnalyzing] = useState(false);
   const [analyzeErr, setAnalyzeErr] = useState("");
+  const [strongOnly, setStrongOnly] = useState(false);
 
   useEffect(() => {
     try {
@@ -146,7 +147,10 @@ export default function JobBoard({ initial }: { initial: BoardData }) {
 
   const rows = useMemo(() => {
     if (!section) return [];
-    const out = baseFiltered.filter((j) => j.category === section);
+    let out = baseFiltered.filter((j) => j.category === section);
+    // "Strong fits only" turns the AI layer into a filter: keep roles the model
+    // scored ≥ 60 (drops senior/off-function noise once a section is analyzed).
+    if (strongOnly) out = out.filter((j) => (analysis[j.id]?.fit ?? -1) >= 60);
     out.sort((a, b) => {
       if (sort === "fit") {
         const fa = analysis[a.id]?.fit ?? -1;
@@ -160,7 +164,9 @@ export default function JobBoard({ initial }: { initial: BoardData }) {
       return tb - ta;
     });
     return out;
-  }, [baseFiltered, section, sort, analysis]);
+  }, [baseFiltered, section, sort, analysis, strongOnly]);
+
+  const hasAnalysis = Object.keys(analysis).length > 0;
 
   // Score the visible roles for fit with Claude (Haiku), then sort by fit.
   const analyzeSection = useCallback(async () => {
@@ -270,6 +276,11 @@ export default function JobBoard({ initial }: { initial: BoardData }) {
             <button className="btn btn-ai" onClick={analyzeSection} disabled={analyzing || rows.length === 0}>
               {analyzing ? "Analyzing…" : "✨ Rank by fit"}
             </button>
+            {hasAnalysis && (
+              <button className={`toggle ${strongOnly ? "on" : ""}`} onClick={() => setStrongOnly((v) => !v)}>
+                Strong fits only
+              </button>
+            )}
           </section>
 
           <div className="profile">

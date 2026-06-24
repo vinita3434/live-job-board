@@ -323,26 +323,34 @@ const CUSTOM_QUERIES = [
   "program manager",
   "product operations",
   "business analyst",
+  "business operations",
   "strategy and operations",
+  "strategy analyst",
   "forward deployed",
   "ai strategy",            // AI-transformation / strategy roles at big orgs
   "ai transformation",
+  "chief of staff",
 ];
 const CUSTOM_MAX_PAGES = 2;
 
 /* Workday full-text ranking buries specific roles under broad terms (e.g.
  * "Product Manager, Emerging Technology" sits past page 5 of "product manager"
- * but top of "pm"), so Workday gets a tighter, abbreviation-aware query set. */
+ * but top of "pm"), so Workday gets a tighter, abbreviation-aware query set
+ * spanning all target functions. Queries run in parallel, 5 pages each. */
 const WORKDAY_QUERIES = [
   "pm",
   "product manager",
   "program manager",
   "product operations",
   "business analyst",
+  "business operations",
   "strategy and operations",
+  "strategy analyst",
   "forward deployed",
   "ai strategy",
   "ai transformation",
+  "transformation consultant",
+  "chief of staff",
 ];
 
 async function microsoft(c: CompanyConfig): Promise<Job[]> {

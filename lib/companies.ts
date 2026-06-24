@@ -256,42 +256,53 @@ export const SECTION_BLURB: Record<string, string> = {
   "Fintech": "Payments, banking, and financial infrastructure",
 };
 
-/* INCLUDE — a role is shown only if its title contains one of these. */
+/* INCLUDE — high recall on purpose. A role is a *candidate* if its title hits
+ * one of these; the AI fit layer (/api/analyze) does the precise entry-level +
+ * function filtering. Cast a wide net across the target functions so creative,
+ * cross-functional titles (e.g. "Product Manager, Emerging Technology",
+ * "Entry-level AI Transformation Consultant") are never dropped here. */
 export const ROLE_KEYWORDS: string[] = [
-  "pm",                       // word-boundary matched: catches "PM, …", "Technical PM", "APM"
-  "product manager",          // also catches Associate / Junior Product Manager
-  "program manager",          // also catches Associate / Junior Program Manager
-  "product operations",
-  "ai strategist",
-  "ai strategy",
-  "deployment strategist",
-  "forward deployed",
-  "business strategy",        // catches Business Strategy Specialist
-  "strategy specialist",
-  "strategy analyst",
-  "business analyst",
-  "product analyst",
-  "product strategy",
-  "strategy & operations",
-  "strategy and operations",
-  "business operations",
+  // product / program / project management
+  "pm", "product manager", "associate product manager", "product owner",
+  "program manager", "program management", "technical program manager",
+  "project manager", "product management",
+  "product operations", "product ops", "product analyst", "product strategy",
+  // business / strategy & operations
+  "business operations", "business analyst", "business strategy",
+  "strategy and operations", "strategy & operations", "strategy analyst",
+  "strategy associate", "strategy manager", "strategy specialist",
+  "corporate strategy", "operations analyst", "operations associate",
+  "revenue operations", "revenue strategy", "growth strategy",
+  "go-to-market", "gtm strategy", "chief of staff",
+  // AI / transformation / consulting
+  "ai strategy", "ai strategist", "ai transformation", "ai consultant",
+  "ai program", "strategy consultant", "transformation consultant",
+  "technology consultant", "management consultant", "digital transformation",
+  // forward-deployed / solutions / deployment
+  "forward deployed", "deployment strategist", "solutions consultant",
+  "implementation consultant",
 ];
 
-/* EXCLUDE — always applied. A role is dropped if its title contains any of
- * these, even if it matched an include keyword. Removes senior/VP/eng roles. */
+/* EXCLUDE — always applied; drops a candidate even if it matched include.
+ * Deliberately SENIORITY-light: it removes only clearly-senior (5+ yr) and
+ * off-target functions, leaving entry/associate/mid (≤4 yr) for the AI layer
+ * to judge. Note: bare "ii" is allowed (Manager II ≈ 2–4 yr); "chief" is NOT
+ * excluded so "Chief of Staff" survives. */
 export const EXCLUDE_KEYWORDS: string[] = [
-  // seniority
-  "senior", "sr", "staff", "principal", "lead", "director", "head of",
-  "vp", "vice president", "chief", "distinguished", "executive",
-  // mid-level numbering (e.g. "Product Manager II", "Analyst III")
-  "ii", "iii",
-  "group product manager", "gpm", "global head",
-  // engineering / non-PM roles
+  // clearly senior (5+ yr). NB: bare "staff" would nuke "Chief of Staff", so we
+  // exclude staff-level target roles specifically instead.
+  "senior", "sr", "principal", "lead", "director", "head of",
+  "vp", "vice president", "svp", "evp", "distinguished",
+  "staff product", "staff program", "staff strategy", "staff business",
+  "group product manager", "gpm", "global head", "iii", "iv",
+  // engineering (note: "forward deployed engineer" survives — no bare "engineer")
   "ml engineer", "machine learning engineer", "software engineer",
   "data engineer", "research engineer", "research scientist",
   "data scientist", "platform engineer", "infrastructure engineer",
   "backend engineer", "frontend engineer", "full stack", "fullstack",
-  "hardware engineer", "design engineer", "devops",
+  "hardware engineer", "design engineer", "devops", "security engineer",
+  // clearly off-target functions
+  "account executive", "sales representative", "recruiter", "accountant",
 ];
 
 /* Upstream cache window (seconds). 1800 = 30 min; 300 = 5 min. */
