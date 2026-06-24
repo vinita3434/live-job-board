@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-const MODEL = "claude-haiku-4-5";
+// Default to Claude Haiku via OpenRouter; override with OPENROUTER_MODEL.
+const MODEL = process.env.OPENROUTER_MODEL || "anthropic/claude-haiku-4.5";
+const ENDPOINT = "https://openrouter.ai/api/v1/chat/completions";
 const MAX_JOBS = 40; // cap per call to bound cost/latency
 
 interface JobIn {
@@ -15,9 +16,8 @@ interface JobIn {
   description?: string;
 }
 
-/* Structured-output schema. Numeric min/max aren't supported in structured
- * outputs, so `fit` is a plain integer and the 0–100 range is enforced in the
- * prompt. */
+/* JSON-schema for OpenAI-compatible structured outputs (strict mode needs every
+ * property listed in `required` and additionalProperties:false at each level). */
 const SCHEMA = {
   type: "object",
   additionalProperties: false,
@@ -37,7 +37,7 @@ const SCHEMA = {
           },
           experience: { type: "string" }, // e.g. "0–2 yrs", "3–5 yrs", "not stated"
           fit: { type: "integer" }, // 0–100
-          reason: { type: "string" }, // one sentence: where the candidate could have impact
+          reason: { type: "string" }, // one sentence on where the candidate could have impact
         },
       },
     },
@@ -49,12 +49,18 @@ const SYSTEM = `You are a precise career-fit analyst. For each job, read the des
 - experience: the years of experience the JD asks for, e.g. "0–2 yrs", "3–5 yrs", "5+ yrs", or "not stated".
 - fit: an integer 0–100 for how well this role fits the candidate profile AND where they could make the most impact. Score HIGHER when the role's function matches the candidate's target areas and the seniority is at or just above their level (a stated 3–4 year requirement is acceptable). Score LOWER for roles that are too senior, off-function, or where the candidate would have little leverage. Be discriminating — use the full range, don't cluster everything near one number.
 - reason: ONE sentence, concrete, on why it fits and where the candidate could have impact (or why it's a weak fit).
-Judge impact from the substance of the JD, not the title. Return results for every job id provided.`;
+Judge impact from the substance of the JD, not the title. Return results for every job id provided. Respond with JSON only.`;
+
+/* Models sometimes wrap JSON in ```fences``` even with response_format set. */
+function parseJson(s: string): any {
+  const cleaned = s.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
+  return JSON.parse(cleaned);
+}
 
 export async function POST(req: Request) {
-  if (!process.env.ANTHROPIC_API_KEY) {
+  if (!process.env.OPENROUTER_API_KEY) {
     return NextResponse.json(
-      { error: "ANTHROPIC_API_KEY is not set on the server. Add it to .env.local (local) or your Vercel project env vars." },
+      { error: "OPENROUTER_API_KEY is not set on the server. Add it to .env.local (local) or your Vercel project env vars." },
       { status: 500 }
     );
   }
@@ -81,32 +87,45 @@ export async function POST(req: Request) {
     description: (j.description ?? "").slice(0, 480),
   }));
 
-  const client = new Anthropic();
-
   try {
-    const res = await client.messages.create({
-      model: MODEL,
-      max_tokens: 4096,
-      system: SYSTEM,
-      output_config: { format: { type: "json_schema", schema: SCHEMA as any } },
-      messages: [
-        {
-          role: "user",
-          content: `Candidate profile:\n${profile}\n\nJobs to score (JSON):\n${JSON.stringify(compact)}`,
+    const res = await fetch(ENDPOINT, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        "Content-Type": "application/json",
+        "X-Title": "goodput job board",
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        temperature: 0.2,
+        max_tokens: 4096,
+        messages: [
+          { role: "system", content: SYSTEM },
+          {
+            role: "user",
+            content: `Candidate profile:\n${profile}\n\nJobs to score (JSON):\n${JSON.stringify(compact)}`,
+          },
+        ],
+        response_format: {
+          type: "json_schema",
+          json_schema: { name: "fit_results", strict: true, schema: SCHEMA },
         },
-      ],
+      }),
     });
 
-    const text = res.content.find((b) => b.type === "text");
-    const raw = text && "text" in text ? text.text : "{}";
-    const parsed = JSON.parse(raw);
+    const data = await res.json();
+    if (!res.ok) {
+      const msg = data?.error?.message || `OpenRouter HTTP ${res.status}`;
+      return NextResponse.json({ error: msg }, { status: res.status });
+    }
+
+    const content = data?.choices?.[0]?.message?.content ?? "{}";
+    const parsed = parseJson(content);
     return NextResponse.json(
       { results: Array.isArray(parsed.results) ? parsed.results : [] },
       { headers: { "Cache-Control": "no-store" } }
     );
   } catch (e: any) {
-    const msg = e?.error?.error?.message || e?.message || "analysis failed";
-    const status = typeof e?.status === "number" ? e.status : 502;
-    return NextResponse.json({ error: msg }, { status });
+    return NextResponse.json({ error: e?.message || "analysis failed" }, { status: 502 });
   }
 }
