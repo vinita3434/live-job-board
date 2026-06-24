@@ -115,7 +115,6 @@ export const COMPANIES: CompanyConfig[] = [
   { name: "Verkada",     ats: "greenhouse", slug: "verkada",          category: "Big Tech" }, // [VERIFIED]
   { name: "Rubrik",      ats: "greenhouse", slug: "rubrik",           category: "Big Tech" }, // [VERIFIED]
   { name: "Linear",      ats: "ashby",      slug: "linear",           category: "Big Tech" }, // [VERIFIED]
-  { name: "Anduril",     ats: "greenhouse", slug: "andurilindustries", category: "Big Tech" }, // [VERIFIED]
   { name: "Wiz",         ats: "greenhouse", slug: "wizinc",           category: "Big Tech" }, // [VERIFIED]
   { name: "1Password",   ats: "ashby",      slug: "1password",        category: "Big Tech" }, // [VERIFIED]
   { name: "Box",         ats: "greenhouse", slug: "boxinc",           category: "Big Tech" }, // [VERIFIED]
@@ -259,6 +258,7 @@ export const SECTION_BLURB: Record<string, string> = {
 
 /* INCLUDE — a role is shown only if its title contains one of these. */
 export const ROLE_KEYWORDS: string[] = [
+  "pm",                       // word-boundary matched: catches "PM, …", "Technical PM", "APM"
   "product manager",          // also catches Associate / Junior Product Manager
   "program manager",          // also catches Associate / Junior Program Manager
   "product operations",

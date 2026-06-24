@@ -104,51 +104,57 @@ async function workday(c: CompanyConfig): Promise<Job[]> {
   const wd = c.workday;
   if (!wd) throw new Error("missing workday config");
   const endpoint = `https://${wd.host}/wday/cxs/${wd.tenant}/${wd.site}/jobs`;
+  const limit = 20;
+  const MAX_PAGES = 5; // up to 100 candidates per query
+  // Enterprise Workday boards have thousands of jobs; a blind fetch only sees
+  // the first couple hundred and misses the PM/strategy roles. Run the role
+  // keyword queries (in parallel) so relevant roles surface even when buried.
+  const perQuery = await Promise.all(
+    WORKDAY_QUERIES.map(async (q) => {
+      const found: any[] = [];
+      for (let page = 0; page < MAX_PAGES; page++) {
+        const res = await fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify({ appliedFacets: {}, limit, offset: page * limit, searchText: q }),
+          cache: "no-store",
+        });
+        // A bad host/tenant/site fails on the very first page of every query →
+        // surfaces as a source error. An empty later query just stops.
+        if (!res.ok) {
+          if (page === 0) throw new Error(`HTTP ${res.status}`);
+          break;
+        }
+        const data = await res.json();
+        const postings = data.jobPostings ?? [];
+        for (const p of postings) found.push(p);
+        if (postings.length < limit) break;
+      }
+      return found;
+    })
+  );
+
   const seen = new Set<string>();
   const out: Job[] = [];
-  const limit = 20;
-  // Enterprise Workday boards have thousands of jobs; a blind paginated fetch
-  // only sees the first ~200 and misses the PM/strategy roles. Instead run the
-  // same keyword queries the board filters on, so relevant roles surface.
-  let first = true;
-  for (const q of CUSTOM_QUERIES) {
-    for (let page = 0; page < 2; page++) {
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({ appliedFacets: {}, limit, offset: page * limit, searchText: q }),
-        cache: "no-store",
+  for (const list of perQuery)
+    for (const p of list) {
+      const key = p.externalPath ?? p.title;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push({
+        id: `wd-${wd.tenant}-${key}`,
+        title: p.title ?? "Untitled role",
+        company: c.name,
+        companyId: companyId(c),
+        category: c.category ?? "",
+        location: p.locationsText ?? "",
+        department: "",
+        url: `https://${wd.host}/en-US/${wd.site}${p.externalPath ?? ""}`,
+        updatedAt: parseWorkdayPostedOn(p.postedOn),
+        description: "",
+        employmentType: "",
       });
-      // Surface a bad host/tenant/site as a source error, but don't let one
-      // empty query kill the rest.
-      if (!res.ok) {
-        if (first) throw new Error(`HTTP ${res.status}`);
-        break;
-      }
-      first = false;
-      const data = await res.json();
-      const postings = data.jobPostings ?? [];
-      for (const p of postings) {
-        const key = p.externalPath ?? p.title;
-        if (seen.has(key)) continue;
-        seen.add(key);
-        out.push({
-          id: `wd-${wd.tenant}-${key}`,
-          title: p.title ?? "Untitled role",
-          company: c.name,
-          companyId: companyId(c),
-          category: c.category ?? "",
-          location: p.locationsText ?? "",
-          department: "",
-          url: `https://${wd.host}/en-US/${wd.site}${p.externalPath ?? ""}`,
-          updatedAt: parseWorkdayPostedOn(p.postedOn),
-          description: "",
-          employmentType: "",
-        });
-      }
-      if (postings.length < limit) break;
     }
-  }
   return out;
 }
 
@@ -323,6 +329,21 @@ const CUSTOM_QUERIES = [
   "ai transformation",
 ];
 const CUSTOM_MAX_PAGES = 2;
+
+/* Workday full-text ranking buries specific roles under broad terms (e.g.
+ * "Product Manager, Emerging Technology" sits past page 5 of "product manager"
+ * but top of "pm"), so Workday gets a tighter, abbreviation-aware query set. */
+const WORKDAY_QUERIES = [
+  "pm",
+  "product manager",
+  "program manager",
+  "product operations",
+  "business analyst",
+  "strategy and operations",
+  "forward deployed",
+  "ai strategy",
+  "ai transformation",
+];
 
 async function microsoft(c: CompanyConfig): Promise<Job[]> {
   const seen = new Set<string>();
