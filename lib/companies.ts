@@ -61,6 +61,12 @@ export const COMPANIES: CompanyConfig[] = [
   { name: "Snorkel AI",  ats: "greenhouse", slug: "snorkelai",        category: "AI Infra" }, // [VERIFIED]
   { name: "Labelbox",    ats: "greenhouse", slug: "labelbox",         category: "AI Infra" }, // [VERIFIED]
   { name: "Confluent",   ats: "ashby",      slug: "confluent",        category: "AI Infra" }, // [VERIFIED]
+  // -- vector DB / eval / data prep / voice infra --
+  { name: "Chroma",      ats: "ashby",      slug: "trychroma",        category: "AI Infra" }, // [VERIFIED]
+  { name: "Arize",       ats: "greenhouse", slug: "arizeai",          category: "AI Infra" }, // [VERIFIED]
+  { name: "Galileo",     ats: "greenhouse", slug: "galileo",          category: "AI Infra" }, // [VERIFIED]
+  { name: "Unstructured",ats: "ashby",      slug: "unstructured",     category: "AI Infra" }, // [VERIFIED]
+  { name: "Vapi",        ats: "ashby",      slug: "vapi",             category: "AI Infra" }, // [VERIFIED]
 
   // ============================ Big Tech ============================
   { name: "Databricks",  ats: "greenhouse", slug: "databricks",       category: "Big Tech" }, // [VERIFIED]
@@ -111,6 +117,20 @@ export const COMPANIES: CompanyConfig[] = [
   { name: "Linear",      ats: "ashby",      slug: "linear",           category: "Big Tech" }, // [VERIFIED]
   { name: "Anduril",     ats: "greenhouse", slug: "andurilindustries", category: "Big Tech" }, // [VERIFIED]
   { name: "Wiz",         ats: "greenhouse", slug: "wizinc",           category: "Big Tech" }, // [VERIFIED]
+  { name: "1Password",   ats: "ashby",      slug: "1password",        category: "Big Tech" }, // [VERIFIED]
+  { name: "Box",         ats: "greenhouse", slug: "boxinc",           category: "Big Tech" }, // [VERIFIED]
+  { name: "Calendly",    ats: "greenhouse", slug: "calendly",         category: "Big Tech" }, // [VERIFIED]
+  { name: "Gong",        ats: "smartrecruiters", slug: "gong",        category: "Big Tech" }, // [VERIFIED]
+  { name: "Duolingo",    ats: "greenhouse", slug: "duolingo",         category: "Big Tech" }, // [VERIFIED]
+  { name: "Faire",       ats: "greenhouse", slug: "faire",            category: "Big Tech" }, // [VERIFIED]
+  { name: "ServiceTitan",ats: "smartrecruiters", slug: "servicetitan", category: "Big Tech" }, // [VERIFIED]
+  { name: "Benchling",   ats: "ashby",      slug: "benchling",        category: "Big Tech" }, // [VERIFIED]
+  { name: "Vanta",       ats: "ashby",      slug: "vanta",            category: "Big Tech" }, // [VERIFIED]
+  { name: "Coursera",    ats: "greenhouse", slug: "coursera",         category: "Big Tech" }, // [VERIFIED]
+  { name: "Nextdoor",    ats: "greenhouse", slug: "nextdoor",         category: "Big Tech" }, // [VERIFIED]
+  { name: "Ironclad",    ats: "ashby",      slug: "ironcladhq",       category: "Big Tech" }, // [VERIFIED]
+  { name: "Canva",       ats: "smartrecruiters", slug: "canva",       category: "Big Tech" }, // [VERIFIED]
+  { name: "Squarespace", ats: "greenhouse", slug: "squarespace",      category: "Big Tech" }, // [VERIFIED]
 
   // ======================= B2B AI Startups =========================
   { name: "Glean",       ats: "greenhouse", slug: "gleanwork",        category: "B2B AI Startups" }, // [VERIFIED]
@@ -126,6 +146,16 @@ export const COMPANIES: CompanyConfig[] = [
   { name: "Abridge",     ats: "ashby",      slug: "abridge",          category: "B2B AI Startups" }, // [VERIFIED]
   { name: "Mercor",      ats: "ashby",      slug: "mercor",           category: "B2B AI Startups" }, // [VERIFIED]
   { name: "Suno",        ats: "ashby",      slug: "suno",             category: "B2B AI Startups" }, // [VERIFIED]
+  { name: "Cartesia",    ats: "ashby",      slug: "cartesia",         category: "B2B AI Startups" }, // [VERIFIED]
+  { name: "Lindy",       ats: "gem",        slug: "lindy",            category: "B2B AI Startups" }, // [VERIFIED]
+  { name: "Typeface",    ats: "greenhouse", slug: "typeface",         category: "B2B AI Startups" }, // [VERIFIED]
+  { name: "Runway",      ats: "ashby",      slug: "runway",           category: "B2B AI Startups" }, // [VERIFIED]
+  { name: "Descript",    ats: "greenhouse", slug: "descript",         category: "B2B AI Startups" }, // [VERIFIED]
+  { name: "Gamma",       ats: "ashby",      slug: "gamma",            category: "B2B AI Startups" }, // [VERIFIED]
+  { name: "Dust",        ats: "ashby",      slug: "dust",             category: "B2B AI Startups" }, // [VERIFIED]
+  { name: "Lovable",     ats: "greenhouse", slug: "lovable",          category: "B2B AI Startups" }, // [VERIFIED]
+  { name: "OpenEvidence",ats: "ashby",      slug: "openevidence",     category: "B2B AI Startups" }, // [VERIFIED]
+  { name: "Ambience",    ats: "ashby",      slug: "ambiencehealthcare", category: "B2B AI Startups" }, // [VERIFIED]
 
   // ========================= Frontier Labs =========================
   { name: "Anthropic",   ats: "greenhouse", slug: "anthropic",        category: "Frontier Labs" }, // [VERIFIED]
@@ -157,6 +187,8 @@ export const COMPANIES: CompanyConfig[] = [
   { name: "Alloy",       ats: "greenhouse", slug: "alloy",            category: "Fintech" }, // [VERIFIED]
   { name: "Socure",      ats: "ashby",      slug: "socure",           category: "Fintech" }, // [VERIFIED]
   { name: "Block (Square)", ats: "smartrecruiters", slug: "Square",   category: "Fintech" }, // [guess] confirm via Sources
+  { name: "Plaid",       ats: "ashby",      slug: "plaid",            category: "Fintech" }, // [VERIFIED]
+  { name: "Carta",       ats: "greenhouse", slug: "carta",            category: "Fintech" }, // [VERIFIED]
 
   // ====================== Data & Analytics =========================
   { name: "Fivetran",    ats: "greenhouse", slug: "fivetran",         category: "Data & Analytics" }, // [VERIFIED]
