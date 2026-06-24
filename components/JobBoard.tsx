@@ -51,6 +51,18 @@ function linkedInUrl(j: Job): string {
 }
 
 const PREFS_KEY = "goodput:prefs:v2";
+const PROFILE_KEY = "goodput:profile";
+const DEFAULT_PROFILE =
+  "Early-career (0–3 years). Targeting AI strategy, product management, program management, business/strategy & operations, and forward-deployed / consulting roles at AI and tech companies. I want roles where I can shape strategy and have high impact early. Mid-level or below; a stated 3–4 year requirement is fine.";
+
+/* per-job analysis returned by /api/analyze */
+interface Analysis {
+  id: string;
+  level: string;
+  experience: string;
+  fit: number;
+  reason: string;
+}
 
 /* ============================= board ============================== */
 export default function JobBoard({ initial }: { initial: BoardData }) {
@@ -59,11 +71,17 @@ export default function JobBoard({ initial }: { initial: BoardData }) {
   const [search, setSearch] = useState("");
   const [refineKw, setRefineKw] = useState<string[]>([]); // optional extra narrowing
   const [newOnly, setNewOnly] = useState(false);
-  const [sort, setSort] = useState<"recent" | "company" | "title">("recent");
+  const [sort, setSort] = useState<"recent" | "company" | "title" | "fit">("recent");
   const [section, setSection] = useState<string | null>(null); // null = landing
   const [excluded, setExcluded] = useState<Record<string, boolean>>({});
   const [sourcesOpen, setSourcesOpen] = useState(false);
   const [kwDraft, setKwDraft] = useState("");
+  // AI fit analysis
+  const [profile, setProfile] = useState(DEFAULT_PROFILE);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [analysis, setAnalysis] = useState<Record<string, Analysis>>({});
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analyzeErr, setAnalyzeErr] = useState("");
 
   useEffect(() => {
     try {
@@ -74,8 +92,13 @@ export default function JobBoard({ initial }: { initial: BoardData }) {
         if (p.excluded) setExcluded(p.excluded);
         if (p.sort) setSort(p.sort);
       }
+      const prof = localStorage.getItem(PROFILE_KEY);
+      if (prof) setProfile(prof);
     } catch {}
   }, []);
+  useEffect(() => {
+    try { localStorage.setItem(PROFILE_KEY, profile); } catch {}
+  }, [profile]);
   useEffect(() => {
     try {
       localStorage.setItem(PREFS_KEY, JSON.stringify({ refineKw, excluded, sort }));
@@ -125,6 +148,11 @@ export default function JobBoard({ initial }: { initial: BoardData }) {
     if (!section) return [];
     const out = baseFiltered.filter((j) => j.category === section);
     out.sort((a, b) => {
+      if (sort === "fit") {
+        const fa = analysis[a.id]?.fit ?? -1;
+        const fb = analysis[b.id]?.fit ?? -1;
+        if (fb !== fa) return fb - fa;
+      }
       if (sort === "company") return a.company.localeCompare(b.company) || a.title.localeCompare(b.title);
       if (sort === "title") return a.title.localeCompare(b.title);
       const ta = a.updatedAt ? Date.parse(a.updatedAt) : 0;
@@ -132,7 +160,34 @@ export default function JobBoard({ initial }: { initial: BoardData }) {
       return tb - ta;
     });
     return out;
-  }, [baseFiltered, section, sort]);
+  }, [baseFiltered, section, sort, analysis]);
+
+  // Score the visible roles for fit with Claude (Haiku), then sort by fit.
+  const analyzeSection = useCallback(async () => {
+    setAnalyzing(true);
+    setAnalyzeErr("");
+    try {
+      const batch = rows.slice(0, 40).map((j) => ({
+        id: j.id, title: j.title, company: j.company, location: j.location, description: j.description,
+      }));
+      const res = await fetch("/api/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ profile, jobs: batch }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setAnalyzeErr(data.error || "Analysis failed."); }
+      else {
+        const add: Record<string, Analysis> = {};
+        for (const r of data.results as Analysis[]) add[r.id] = r;
+        setAnalysis((prev) => ({ ...prev, ...add }));
+        setSort("fit");
+      }
+    } catch {
+      setAnalyzeErr("Could not reach the analysis service.");
+    }
+    setAnalyzing(false);
+  }, [rows, profile]);
 
   const addKw = () => {
     const k = kwDraft.trim().toLowerCase();
@@ -209,9 +264,30 @@ export default function JobBoard({ initial }: { initial: BoardData }) {
                 <option value="recent">Recently posted</option>
                 <option value="company">Company</option>
                 <option value="title">Title A–Z</option>
+                <option value="fit">Best fit</option>
               </select>
             </label>
+            <button className="btn btn-ai" onClick={analyzeSection} disabled={analyzing || rows.length === 0}>
+              {analyzing ? "Analyzing…" : "✨ Rank by fit"}
+            </button>
           </section>
+
+          <div className="profile">
+            <button className="profile-toggle" onClick={() => setProfileOpen((v) => !v)}>
+              <span className={`caret ${profileOpen ? "open" : ""}`}>▸</span>
+              Your profile <span className="profile-hint">— used to score fit</span>
+            </button>
+            {profileOpen && (
+              <textarea
+                className="profile-box"
+                value={profile}
+                onChange={(e) => setProfile(e.target.value)}
+                rows={3}
+                placeholder="Describe your background, target roles, and seniority…"
+              />
+            )}
+          </div>
+          {analyzeErr && <div className="analyze-err">{analyzeErr}</div>}
 
           <div className="kw">
             <span className="kw-label">Refine:</span>
@@ -266,7 +342,7 @@ export default function JobBoard({ initial }: { initial: BoardData }) {
                 <button className="btn" onClick={() => setSection(null)}>← All sections</button>
               </div>
             ) : (
-              rows.map((j) => <JobCard key={j.id} j={j} />)
+              rows.map((j) => <JobCard key={j.id} j={j} a={analysis[j.id]} />)
             )}
           </main>
         </>
@@ -282,10 +358,23 @@ export default function JobBoard({ initial }: { initial: BoardData }) {
 }
 
 /* ----------------------------- job card --------------------------- */
-function JobCard({ j }: { j: Job }) {
+function fitClass(fit: number): string {
+  if (fit >= 75) return "hi";
+  if (fit >= 50) return "mid";
+  return "lo";
+}
+function levelClass(l: string): string {
+  const t = l.toLowerCase();
+  if (t.includes("intern") || t.includes("entry")) return "lo";
+  if (t.includes("mid")) return "mid";
+  if (t.includes("senior") || t.includes("lead") || t.includes("+")) return "hi";
+  return "mid";
+}
+function JobCard({ j, a }: { j: Job; a?: Analysis }) {
   const [open, setOpen] = useState(false);
-  const level = levelFromTitle(j.title);
-  const exp = experienceFromDesc(j.description);
+  // Prefer Claude's read of level/experience when available; else heuristics.
+  const level = a && a.level !== "Unclear" ? a.level : levelFromTitle(j.title);
+  const exp = a && a.experience !== "not stated" ? a.experience : experienceFromDesc(j.description);
   const hasDesc = j.description.length > 0;
   const clamped = !open && j.description.length > 220;
   const shown = clamped ? j.description.slice(0, 220).replace(/\s+\S*$/, "") + "…" : j.description;
@@ -301,17 +390,22 @@ function JobCard({ j }: { j: Job }) {
             {j.department && <span className="co-dept">{j.department}</span>}
           </div>
         </div>
-        {j.updatedAt && (
-          <span className={`card-age ${isNew(j.updatedAt) ? "fresh" : ""}`}>{relTime(j.updatedAt)}</span>
-        )}
+        <div className="card-right">
+          {a && <span className={`fit-pill ${fitClass(a.fit)}`}>{a.fit}<i>fit</i></span>}
+          {j.updatedAt && (
+            <span className={`card-age ${isNew(j.updatedAt) ? "fresh" : ""}`}>{relTime(j.updatedAt)}</span>
+          )}
+        </div>
       </div>
 
       <div className="badges">
-        {level && <span className={`badge lvl ${level === "Entry-level" || level === "Internship" ? "lo" : level === "Mid-level" ? "mid" : "hi"}`}>{level}</span>}
+        {level && <span className={`badge lvl ${levelClass(level)}`}>{level}</span>}
         {exp && <span className="badge exp">{exp}</span>}
         {j.employmentType && <span className="badge type">{j.employmentType}</span>}
         {!level && !exp && <span className="badge muted">level not stated</span>}
       </div>
+
+      {a?.reason && <p className="fit-reason">{a.reason}</p>}
 
       {hasDesc ? (
         <p className="card-desc">
