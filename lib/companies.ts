@@ -133,40 +133,40 @@ export const COMPANIES: CompanyConfig[] = [
   { name: "Squarespace", ats: "greenhouse", slug: "squarespace",      category: "Big Tech" }, // [VERIFIED]
 
   // ======================= B2B AI Startups =========================
-  { name: "Glean",       ats: "greenhouse", slug: "gleanwork",        category: "B2B AI Startups" }, // [VERIFIED]
-  { name: "Writer",      ats: "ashby",      slug: "writer",           category: "B2B AI Startups" }, // [VERIFIED]
-  { name: "Hebbia",      ats: "ashby",      slug: "hebbia-ai",        category: "B2B AI Startups" }, // [VERIFIED]
-  { name: "Harvey",      ats: "ashby",      slug: "harvey",           category: "B2B AI Startups" }, // [VERIFIED]
-  { name: "Decagon",     ats: "ashby",      slug: "decagon",          category: "B2B AI Startups" }, // [VERIFIED]
-  { name: "Sierra",      ats: "ashby",      slug: "Sierra",           category: "B2B AI Startups" }, // [VERIFIED]
-  { name: "Cresta",      ats: "lever",      slug: "cresta",           category: "B2B AI Startups" }, // [guess]
-  { name: "Character.AI",ats: "ashby",      slug: "character",        category: "B2B AI Startups" }, // [VERIFIED]
-  { name: "ElevenLabs",  ats: "ashby",      slug: "elevenlabs",       category: "B2B AI Startups" }, // [VERIFIED]
-  { name: "Synthesia",   ats: "ashby",      slug: "synthesia",        category: "B2B AI Startups" }, // [VERIFIED]
-  { name: "Abridge",     ats: "ashby",      slug: "abridge",          category: "B2B AI Startups" }, // [VERIFIED]
-  { name: "Mercor",      ats: "ashby",      slug: "mercor",           category: "B2B AI Startups" }, // [VERIFIED]
-  { name: "Suno",        ats: "ashby",      slug: "suno",             category: "B2B AI Startups" }, // [VERIFIED]
-  { name: "Cartesia",    ats: "ashby",      slug: "cartesia",         category: "B2B AI Startups" }, // [VERIFIED]
-  { name: "Lindy",       ats: "gem",        slug: "lindy",            category: "B2B AI Startups" }, // [VERIFIED]
-  { name: "Typeface",    ats: "greenhouse", slug: "typeface",         category: "B2B AI Startups" }, // [VERIFIED]
-  { name: "Runway",      ats: "ashby",      slug: "runway",           category: "B2B AI Startups" }, // [VERIFIED]
-  { name: "Descript",    ats: "greenhouse", slug: "descript",         category: "B2B AI Startups" }, // [VERIFIED]
-  { name: "Gamma",       ats: "ashby",      slug: "gamma",            category: "B2B AI Startups" }, // [VERIFIED]
-  { name: "Dust",        ats: "ashby",      slug: "dust",             category: "B2B AI Startups" }, // [VERIFIED]
-  { name: "Lovable",     ats: "greenhouse", slug: "lovable",          category: "B2B AI Startups" }, // [VERIFIED]
-  { name: "OpenEvidence",ats: "ashby",      slug: "openevidence",     category: "B2B AI Startups" }, // [VERIFIED]
-  { name: "Ambience",    ats: "ashby",      slug: "ambiencehealthcare", category: "B2B AI Startups" }, // [VERIFIED]
+  { name: "Glean",       ats: "greenhouse", slug: "gleanwork",        category: "AI Startups" }, // [VERIFIED]
+  { name: "Writer",      ats: "ashby",      slug: "writer",           category: "AI Startups" }, // [VERIFIED]
+  { name: "Hebbia",      ats: "ashby",      slug: "hebbia-ai",        category: "AI Startups" }, // [VERIFIED]
+  { name: "Harvey",      ats: "ashby",      slug: "harvey",           category: "AI Startups" }, // [VERIFIED]
+  { name: "Decagon",     ats: "ashby",      slug: "decagon",          category: "AI Startups" }, // [VERIFIED]
+  { name: "Sierra",      ats: "ashby",      slug: "Sierra",           category: "AI Startups" }, // [VERIFIED]
+  { name: "Cresta",      ats: "lever",      slug: "cresta",           category: "AI Startups" }, // [guess]
+  { name: "Character.AI",ats: "ashby",      slug: "character",        category: "AI Startups" }, // [VERIFIED]
+  { name: "ElevenLabs",  ats: "ashby",      slug: "elevenlabs",       category: "AI Startups" }, // [VERIFIED]
+  { name: "Synthesia",   ats: "ashby",      slug: "synthesia",        category: "AI Startups" }, // [VERIFIED]
+  { name: "Abridge",     ats: "ashby",      slug: "abridge",          category: "AI Startups" }, // [VERIFIED]
+  { name: "Mercor",      ats: "ashby",      slug: "mercor",           category: "AI Startups" }, // [VERIFIED]
+  { name: "Suno",        ats: "ashby",      slug: "suno",             category: "AI Startups" }, // [VERIFIED]
+  { name: "Cartesia",    ats: "ashby",      slug: "cartesia",         category: "AI Startups" }, // [VERIFIED]
+  { name: "Lindy",       ats: "gem",        slug: "lindy",            category: "AI Startups" }, // [VERIFIED]
+  { name: "Typeface",    ats: "greenhouse", slug: "typeface",         category: "AI Startups" }, // [VERIFIED]
+  { name: "Runway",      ats: "ashby",      slug: "runway",           category: "AI Startups" }, // [VERIFIED]
+  { name: "Descript",    ats: "greenhouse", slug: "descript",         category: "AI Startups" }, // [VERIFIED]
+  { name: "Gamma",       ats: "ashby",      slug: "gamma",            category: "AI Startups" }, // [VERIFIED]
+  { name: "Dust",        ats: "ashby",      slug: "dust",             category: "AI Startups" }, // [VERIFIED]
+  { name: "Lovable",     ats: "greenhouse", slug: "lovable",          category: "AI Startups" }, // [VERIFIED]
+  { name: "OpenEvidence",ats: "ashby",      slug: "openevidence",     category: "AI Startups" }, // [VERIFIED]
+  { name: "Ambience",    ats: "ashby",      slug: "ambiencehealthcare", category: "AI Startups" }, // [VERIFIED]
 
   // ========================= Frontier Labs =========================
-  { name: "Anthropic",   ats: "greenhouse", slug: "anthropic",        category: "Frontier Labs" }, // [VERIFIED]
-  { name: "OpenAI",      ats: "ashby",      slug: "openai",           category: "Frontier Labs" }, // [VERIFIED]
-  { name: "Cognition",   ats: "ashby",      slug: "cognition",        category: "Frontier Labs" }, // [VERIFIED]
-  { name: "Scale AI",    ats: "greenhouse", slug: "scaleai",          category: "Frontier Labs" }, // [VERIFIED]
-  { name: "Cohere",      ats: "ashby",      slug: "cohere",           category: "Frontier Labs" }, // [guess]
-  { name: "Mistral AI",  ats: "lever",      slug: "mistral",          category: "Frontier Labs" }, // [VERIFIED]
-  { name: "xAI",         ats: "greenhouse", slug: "xai",              category: "Frontier Labs" }, // [VERIFIED]
-  { name: "Imbue",       ats: "greenhouse", slug: "imbue",            category: "Frontier Labs" }, // [VERIFIED]
-  { name: "Poolside",    ats: "ashby",      slug: "poolside",         category: "Frontier Labs" }, // [VERIFIED]
+  { name: "Anthropic",   ats: "greenhouse", slug: "anthropic",        category: "AI Startups" }, // [VERIFIED]
+  { name: "OpenAI",      ats: "ashby",      slug: "openai",           category: "AI Startups" }, // [VERIFIED]
+  { name: "Cognition",   ats: "ashby",      slug: "cognition",        category: "AI Startups" }, // [VERIFIED]
+  { name: "Scale AI",    ats: "greenhouse", slug: "scaleai",          category: "AI Startups" }, // [VERIFIED]
+  { name: "Cohere",      ats: "ashby",      slug: "cohere",           category: "AI Startups" }, // [guess]
+  { name: "Mistral AI",  ats: "lever",      slug: "mistral",          category: "AI Startups" }, // [VERIFIED]
+  { name: "xAI",         ats: "greenhouse", slug: "xai",              category: "AI Startups" }, // [VERIFIED]
+  { name: "Imbue",       ats: "greenhouse", slug: "imbue",            category: "AI Startups" }, // [VERIFIED]
+  { name: "Poolside",    ats: "ashby",      slug: "poolside",         category: "AI Startups" }, // [VERIFIED]
 
   // ============================ Fintech ============================
   { name: "Stripe",      ats: "greenhouse", slug: "stripe",           category: "Fintech" }, // [VERIFIED]
@@ -191,36 +191,43 @@ export const COMPANIES: CompanyConfig[] = [
   { name: "Carta",       ats: "greenhouse", slug: "carta",            category: "Fintech" }, // [VERIFIED]
 
   // ====================== Data & Analytics =========================
-  { name: "Fivetran",    ats: "greenhouse", slug: "fivetran",         category: "Data & Analytics" }, // [VERIFIED]
-  { name: "dbt Labs",    ats: "greenhouse", slug: "dbtlabsinc",       category: "Data & Analytics" }, // [VERIFIED]
-  { name: "Airbyte",     ats: "ashby",      slug: "airbyte",          category: "Data & Analytics" }, // [VERIFIED]
-  { name: "Starburst",   ats: "greenhouse", slug: "starburst",        category: "Data & Analytics" }, // [VERIFIED]
-  { name: "ClickHouse",  ats: "ashby",      slug: "clickhouse",       category: "Data & Analytics" }, // [VERIFIED]
-  { name: "MotherDuck",  ats: "ashby",      slug: "motherduck",       category: "Data & Analytics" }, // [VERIFIED]
-  { name: "Sigma Computing", ats: "greenhouse", slug: "sigmacomputing", category: "Data & Analytics" }, // [VERIFIED]
-  { name: "Hightouch",   ats: "greenhouse", slug: "hightouch",        category: "Data & Analytics" }, // [VERIFIED]
-  { name: "Atlan",       ats: "ashby",      slug: "atlan",            category: "Data & Analytics" }, // [VERIFIED]
-  { name: "Hex",         ats: "greenhouse", slug: "hextechnologies",  category: "Data & Analytics" }, // [VERIFIED]
-  { name: "Cribl",       ats: "greenhouse", slug: "cribl",            category: "Data & Analytics" }, // [VERIFIED]
-  { name: "Redpanda",    ats: "greenhouse", slug: "redpandadata",     category: "Data & Analytics" }, // [VERIFIED]
-  { name: "Astronomer",  ats: "ashby",      slug: "astronomer",       category: "Data & Analytics" }, // [VERIFIED]
-  { name: "Dremio",      ats: "greenhouse", slug: "dremio",           category: "Data & Analytics" }, // [VERIFIED]
-  { name: "Materialize", ats: "ashby",      slug: "materialize",      category: "Data & Analytics" }, // [VERIFIED]
-  { name: "Dagster",     ats: "greenhouse", slug: "dagsterlabs",      category: "Data & Analytics" }, // [VERIFIED] (empty board ok)
+  { name: "Fivetran",    ats: "greenhouse", slug: "fivetran",         category: "AI Infra" }, // [VERIFIED]
+  { name: "dbt Labs",    ats: "greenhouse", slug: "dbtlabsinc",       category: "AI Infra" }, // [VERIFIED]
+  { name: "Airbyte",     ats: "ashby",      slug: "airbyte",          category: "AI Infra" }, // [VERIFIED]
+  { name: "Starburst",   ats: "greenhouse", slug: "starburst",        category: "AI Infra" }, // [VERIFIED]
+  { name: "ClickHouse",  ats: "ashby",      slug: "clickhouse",       category: "AI Infra" }, // [VERIFIED]
+  { name: "MotherDuck",  ats: "ashby",      slug: "motherduck",       category: "AI Infra" }, // [VERIFIED]
+  { name: "Sigma Computing", ats: "greenhouse", slug: "sigmacomputing", category: "AI Infra" }, // [VERIFIED]
+  { name: "Hightouch",   ats: "greenhouse", slug: "hightouch",        category: "AI Infra" }, // [VERIFIED]
+  { name: "Atlan",       ats: "ashby",      slug: "atlan",            category: "AI Infra" }, // [VERIFIED]
+  { name: "Hex",         ats: "greenhouse", slug: "hextechnologies",  category: "AI Infra" }, // [VERIFIED]
+  { name: "Cribl",       ats: "greenhouse", slug: "cribl",            category: "AI Infra" }, // [VERIFIED]
+  { name: "Redpanda",    ats: "greenhouse", slug: "redpandadata",     category: "AI Infra" }, // [VERIFIED]
+  { name: "Astronomer",  ats: "ashby",      slug: "astronomer",       category: "AI Infra" }, // [VERIFIED]
+  { name: "Dremio",      ats: "greenhouse", slug: "dremio",           category: "AI Infra" }, // [VERIFIED]
+  { name: "Materialize", ats: "ashby",      slug: "materialize",      category: "AI Infra" }, // [VERIFIED]
+  { name: "Dagster",     ats: "greenhouse", slug: "dagsterlabs",      category: "AI Infra" }, // [VERIFIED] (empty board ok)
 
   // iCIMS example (no company here uses it). Shape:
   // { name: "Acme", ats: "icims", slug: "acme", category: "Big Tech", icims: { host: "careers-acme.icims.com" } },
 ];
 
-/* Section order / tab order in the UI. */
+/* The four top-level sections shown on the landing page, in display order.
+ * A company's `category` must be one of these. */
 export const CATEGORY_ORDER = [
   "AI Infra",
   "Big Tech",
-  "B2B AI Startups",
-  "Frontier Labs",
+  "AI Startups",
   "Fintech",
-  "Data & Analytics",
 ];
+
+/* One-line descriptor per section, shown on the landing cards. */
+export const SECTION_BLURB: Record<string, string> = {
+  "AI Infra": "Chips, compute, model serving, data & dev tooling",
+  "Big Tech": "Established & scaled public/late-stage tech",
+  "AI Startups": "Frontier labs and fast-growing applied-AI companies",
+  "Fintech": "Payments, banking, and financial infrastructure",
+};
 
 /* INCLUDE — a role is shown only if its title contains one of these. */
 export const ROLE_KEYWORDS: string[] = [

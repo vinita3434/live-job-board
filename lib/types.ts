@@ -42,6 +42,10 @@ export interface Job {
   department: string;
   url: string;
   updatedAt: string | null;
+  /** short plain-text JD summary (truncated server-side); "" if unavailable */
+  description: string;
+  /** e.g. "Full-time", "Contract"; "" if unknown */
+  employmentType: string;
 }
 
 export interface SourceStatus {

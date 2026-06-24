@@ -14,8 +14,21 @@ async function getJson(url: string): Promise<any> {
   return res.json();
 }
 
+/* Strip HTML + entities, collapse whitespace, truncate to a JD summary.
+ * Truncating here keeps the board payload small even with content=true. */
+function cleanDesc(s?: string, max = 480): string {
+  if (!s) return "";
+  const t = decodeEntities(String(s).replace(/<[^>]+>/g, " "))
+    .replace(/\s+/g, " ")
+    .trim();
+  return t.length > max ? t.slice(0, max).replace(/\s+\S*$/, "") + "…" : t;
+}
+
 /* ----------------------------- adapters --------------------------- */
 async function greenhouse(c: CompanyConfig): Promise<Job[]> {
+  // NB: the list endpoint omits job descriptions; `?content=true` would include
+  // them but returns multi-MB HTML per board (over Next's 2MB cache limit and
+  // slow), so we keep this lean. Greenhouse cards show the "open posting" note.
   const data = await getJson(
     `https://boards-api.greenhouse.io/v1/boards/${encodeURIComponent(c.slug)}/jobs`
   );
@@ -26,9 +39,11 @@ async function greenhouse(c: CompanyConfig): Promise<Job[]> {
     companyId: companyId(c),
     category: c.category ?? "",
     location: j.location?.name ?? "",
-    department: "",
+    department: (j.departments?.[0]?.name) ?? "",
     url: j.absolute_url,
     updatedAt: j.updated_at ?? null,
+    description: "",
+    employmentType: "",
   }));
 }
 
@@ -46,6 +61,8 @@ async function lever(c: CompanyConfig): Promise<Job[]> {
     department: j.categories?.team ?? "",
     url: j.hostedUrl ?? j.applyUrl,
     updatedAt: j.createdAt ? new Date(j.createdAt).toISOString() : null,
+    description: cleanDesc(j.descriptionPlain ?? j.description),
+    employmentType: j.categories?.commitment ?? "",
   }));
 }
 
@@ -63,6 +80,8 @@ async function ashby(c: CompanyConfig): Promise<Job[]> {
     department: j.department ?? j.team ?? "",
     url: j.jobUrl ?? j.applyUrl,
     updatedAt: j.publishedAt ?? j.updatedAt ?? null,
+    description: cleanDesc(j.descriptionPlain ?? j.descriptionHtml),
+    employmentType: j.employmentType ?? "",
   }));
 }
 
@@ -110,6 +129,8 @@ async function workday(c: CompanyConfig): Promise<Job[]> {
         department: "",
         url: `https://${wd.host}/en-US/${wd.site}${p.externalPath ?? ""}`,
         updatedAt: parseWorkdayPostedOn(p.postedOn),
+        description: "",
+        employmentType: "",
       });
     }
     if (postings.length < limit) break;
@@ -146,6 +167,8 @@ async function smartrecruiters(c: CompanyConfig): Promise<Job[]> {
         department: p.department?.label ?? "",
         url: `https://jobs.smartrecruiters.com/${encodeURIComponent(c.slug)}/${p.id}`,
         updatedAt: p.releasedDate ?? null,
+        description: "",
+        employmentType: p.typeOfEmployment?.label ?? "",
       });
     }
     if (items.length < limit) break;
@@ -199,6 +222,10 @@ async function gem(c: CompanyConfig): Promise<Job[]> {
       department: j.job?.department?.name ?? "",
       url: `https://jobs.gem.com/${encodeURIComponent(c.slug)}/${j.extId ?? j.id}`,
       updatedAt: null,
+      description: "",
+      employmentType: j.job?.employmentType
+        ? String(j.job.employmentType).toLowerCase().replace(/_/g, "-").replace(/^\w/, (m: string) => m.toUpperCase())
+        : "",
     };
   });
 }
@@ -259,6 +286,8 @@ async function icims(c: CompanyConfig): Promise<Job[]> {
         department: "",
         url,
         updatedAt: null,
+        description: "",
+        employmentType: "",
       });
     }
     if (out.length === before) break; // no new jobs on this page -> stop
@@ -306,6 +335,8 @@ async function microsoft(c: CompanyConfig): Promise<Job[]> {
             department: "",
             url: `https://jobs.careers.microsoft.com/global/en/job/${id}`,
             updatedAt: j.postingDate ?? null,
+            description: cleanDesc(j.properties?.description),
+            employmentType: j.properties?.employmentType ?? "",
           });
         }
         if (jobs.length < 20) break;
@@ -352,6 +383,8 @@ async function amazon(c: CompanyConfig): Promise<Job[]> {
             department: "",
             url: `https://www.amazon.jobs${j.job_path ?? ""}`,
             updatedAt,
+            description: cleanDesc(j.description_short ?? j.description),
+            employmentType: j.job_schedule_type ?? "",
           });
         }
         if (jobs.length < 100) break;
@@ -403,6 +436,8 @@ async function google(c: CompanyConfig): Promise<Job[]> {
           department: "",
           url: `https://www.google.com/about/careers/applications/jobs/results/${href ?? id}`,
           updatedAt: null,
+          description: "",
+          employmentType: "",
         });
       }
       if (added === 0) break;

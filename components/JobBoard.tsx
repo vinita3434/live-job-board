@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useMemo, useEffect, useCallback } from "react";
-import type { BoardData, Job, SourceStatus } from "@/lib/types";
-import { CATEGORY_ORDER, EXCLUDE_KEYWORDS } from "@/lib/companies";
+import type { BoardData, Job } from "@/lib/types";
+import { CATEGORY_ORDER, SECTION_BLURB, EXCLUDE_KEYWORDS } from "@/lib/companies";
 
 /* --------------------------- helpers ------------------------------ */
 function relTime(iso: string | null): string {
@@ -38,11 +38,34 @@ function matchInclude(title: string, kws: string[], on: boolean): boolean {
   return containsAny(title, kws);
 }
 
+/* Derive a seniority level from the title (ATS feeds rarely expose one). */
+function levelFromTitle(title: string): string | null {
+  const t = ` ${title.toLowerCase()} `;
+  if (/\bintern(ship)?\b/.test(t)) return "Internship";
+  if (/\b(new grad|graduate|entry[- ]level|junior|jr|associate|apprentice)\b/.test(t)) return "Entry-level";
+  if (/\b(senior|sr|staff|principal|lead|director|head of|vp|vice president|chief)\b/.test(t)) return "Senior+";
+  if (/\b(ii|iii|2|3|mid)\b/.test(t)) return "Mid-level";
+  return null;
+}
+
+/* Pull an experience requirement out of the JD text if one is stated. */
+function experienceFromDesc(desc: string): string | null {
+  if (!desc) return null;
+  const m =
+    desc.match(/(\d+)\s*[-–to]+\s*(\d+)\+?\s*years?/i) ||
+    desc.match(/(\d+)\+?\s*years?(?:\s+of)?(?:\s+(?:relevant|related|professional|industry))?\s+experience/i) ||
+    desc.match(/(\d+)\+?\s*years?/i);
+  if (!m) return null;
+  if (m[2]) return `${m[1]}–${m[2]} yrs exp`;
+  return `${m[1]}+ yrs exp`;
+}
+
+function linkedInUrl(j: Job): string {
+  const q = encodeURIComponent(`${j.title} ${j.company}`);
+  return `https://www.linkedin.com/jobs/search/?keywords=${q}`;
+}
+
 const PREFS_KEY = "goodput:prefs";
-const ATS_LABEL: Record<string, string> = {
-  greenhouse: "GH", lever: "LV", ashby: "AS", workday: "WD", smartrecruiters: "SR", icims: "IC",
-  microsoft: "MS", amazon: "AMZ", google: "GOOG",
-};
 
 /* ============================= board ============================== */
 export default function JobBoard({
@@ -59,7 +82,7 @@ export default function JobBoard({
   const [keywordOn, setKeywordOn] = useState(true);
   const [newOnly, setNewOnly] = useState(false);
   const [sort, setSort] = useState<"recent" | "company" | "title">("recent");
-  const [section, setSection] = useState<string>("all");
+  const [section, setSection] = useState<string | null>(null); // null = landing
   const [excluded, setExcluded] = useState<Record<string, boolean>>({});
   const [sourcesOpen, setSourcesOpen] = useState(false);
   const [kwDraft, setKwDraft] = useState("");
@@ -94,7 +117,7 @@ export default function JobBoard({
   const okSources = board.sources.filter((s) => s.ok);
   const errSources = board.sources.filter((s) => !s.ok);
 
-  // include/exclude/search/new — everything except the section tab
+  // include/exclude/search/new — independent of which section is open
   const baseFiltered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return board.jobs.filter((j) => {
@@ -110,16 +133,21 @@ export default function JobBoard({
     });
   }, [board.jobs, excluded, search, keywords, keywordOn, newOnly]);
 
-  // per-section counts for the tab bar
-  const sectionCounts = useMemo(() => {
-    const m: Record<string, number> = {};
-    baseFiltered.forEach((j) => { m[j.category] = (m[j.category] || 0) + 1; });
+  // per-section stats for the landing cards
+  const sectionStats = useMemo(() => {
+    const m: Record<string, { count: number; companies: Set<string> }> = {};
+    for (const cat of CATEGORY_ORDER) m[cat] = { count: 0, companies: new Set() };
+    baseFiltered.forEach((j) => {
+      const s = m[j.category];
+      if (s) { s.count++; s.companies.add(j.company); }
+    });
     return m;
   }, [baseFiltered]);
 
   const rows = useMemo(() => {
-    let out = section === "all" ? baseFiltered : baseFiltered.filter((j) => j.category === section);
-    out = [...out].sort((a, b) => {
+    if (!section) return [];
+    const out = baseFiltered.filter((j) => j.category === section);
+    out.sort((a, b) => {
       if (sort === "company") return a.company.localeCompare(b.company) || a.title.localeCompare(b.title);
       if (sort === "title") return a.title.localeCompare(b.title);
       const ta = a.updatedAt ? Date.parse(a.updatedAt) : 0;
@@ -129,33 +157,22 @@ export default function JobBoard({
     return out;
   }, [baseFiltered, section, sort]);
 
-  const groups = useMemo(() => {
-    if (section !== "all") return [{ cat: section, items: rows }];
-    const present = Array.from(new Set(rows.map((r) => r.category || "Other")));
-    const order = [...CATEGORY_ORDER, ...present.filter((c) => !CATEGORY_ORDER.includes(c))];
-    return order
-      .map((cat) => ({ cat, items: rows.filter((r) => (r.category || "Other") === cat) }))
-      .filter((g) => g.items.length > 0);
-  }, [rows, section]);
-
   const addKw = () => {
     const k = kwDraft.trim().toLowerCase();
     if (k && !keywords.includes(k)) setKeywords([...keywords, k]);
     setKwDraft("");
   };
 
-  const tabs = ["all", ...CATEGORY_ORDER];
-
   return (
     <div className="root">
       <header className="header">
-        <div className="brand">
+        <button className="brand" onClick={() => setSection(null)} title="Back to sections">
           <span className="pulse" aria-hidden />
           <span className="word">goodput</span>
           <span className="sub">live roles across your target stack</span>
-        </div>
+        </button>
         <div className="head-right">
-          <span className="meta">{okSources.length} sources · {rows.length} roles</span>
+          <span className="meta">{okSources.length} sources · {baseFiltered.length} roles</span>
           <span className="stamp">synced {relTime(board.fetchedAt) === "today" ? "recently" : relTime(board.fetchedAt)}</span>
           <button className="btn btn-primary" onClick={refresh} disabled={busy}>
             {busy ? "Refreshing…" : "Refresh"}
@@ -164,145 +181,178 @@ export default function JobBoard({
       </header>
       <div className={`scan ${busy ? "on" : ""}`} aria-hidden />
 
-      {/* section tabs — the primary navigation */}
-      <nav className="tabs">
-        {tabs.map((t) => {
-          const count = t === "all" ? baseFiltered.length : (sectionCounts[t] || 0);
-          return (
-            <button
-              key={t}
-              className={`tab ${section === t ? "on" : ""}`}
-              onClick={() => setSection(t)}
-            >
-              {t === "all" ? "All roles" : t}
-              <span className="tab-count">{count}</span>
-            </button>
-          );
-        })}
+      {/* breadcrumb */}
+      <nav className="crumbs">
+        <button className={`crumb ${!section ? "here" : ""}`} onClick={() => setSection(null)}>Sections</button>
+        {section && <><span className="crumb-sep">/</span><span className="crumb here">{section}</span></>}
       </nav>
 
-      {/* controls */}
-      <section className="controls">
-        <div className="search">
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Filter by title, location, or company"
-            aria-label="Search roles"
-          />
-          {search && <button className="search-x" onClick={() => setSearch("")}>×</button>}
-        </div>
-        <button className={`toggle ${keywordOn ? "on" : ""}`} onClick={() => setKeywordOn((v) => !v)}>
-          Role filter {keywordOn ? "on" : "off"}
-        </button>
-        <button className={`toggle ${newOnly ? "on" : ""}`} onClick={() => setNewOnly((v) => !v)}>
-          New · 7d
-        </button>
-        <label className="sortwrap">
-          <select value={sort} onChange={(e) => setSort(e.target.value as any)} aria-label="Sort roles">
-            <option value="recent">Recently posted</option>
-            <option value="company">Company</option>
-            <option value="title">Title A–Z</option>
-          </select>
-        </label>
-      </section>
-
-      {keywordOn && (
-        <div className="kw">
-          {keywords.map((k) => (
-            <span key={k} className="kw-chip">
-              {k}
-              <button onClick={() => setKeywords(keywords.filter((x) => x !== k))} aria-label={`Remove ${k}`}>×</button>
-            </span>
-          ))}
-          <input
-            className="kw-input"
-            value={kwDraft}
-            onChange={(e) => setKwDraft(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter") addKw(); }}
-            onBlur={addKw}
-            placeholder="+ keyword"
-            aria-label="Add keyword"
-          />
-        </div>
+      {/* ---------- LANDING: four section cards ---------- */}
+      {!section && (
+        <section className="sections">
+          {CATEGORY_ORDER.map((cat) => {
+            const st = sectionStats[cat] || { count: 0, companies: new Set<string>() };
+            const sample = Array.from(st.companies).slice(0, 5);
+            return (
+              <button key={cat} className="section-card" onClick={() => setSection(cat)}>
+                <div className="sc-top">
+                  <span className="sc-name">{cat}</span>
+                  <span className="sc-count">{st.count}<i>roles</i></span>
+                </div>
+                <p className="sc-blurb">{SECTION_BLURB[cat] ?? ""}</p>
+                <div className="sc-foot">
+                  <span className="sc-cos">{st.companies.size} companies</span>
+                  {sample.length > 0 && <span className="sc-sample">{sample.join(" · ")}{st.companies.size > 5 ? " …" : ""}</span>}
+                </div>
+                <span className="sc-go" aria-hidden>→</span>
+              </button>
+            );
+          })}
+        </section>
       )}
 
-      {/* collapsible sources panel — keeps the company clutter out of the way */}
-      <div className="sources">
-        <button className="sources-toggle" onClick={() => setSourcesOpen((v) => !v)}>
-          <span className={`caret ${sourcesOpen ? "open" : ""}`}>▸</span>
-          Sources · {okSources.length}/{board.sources.length} live
-          {errSources.length > 0 && <span className="sources-err"> · {errSources.length} need a fix</span>}
-        </button>
-        {sourcesOpen && (
-          <div className="sources-panel">
-            {board.sources.map((s) => (
-              <button
-                key={s.id}
-                className={`chip ${excluded[s.id] ? "off" : ""}`}
-                onClick={() => setExcluded((e) => ({ ...e, [s.id]: !e[s.id] }))}
-                title={excluded[s.id] ? "Show roles" : "Hide roles"}
-              >
-                <span className={`dot ${s.ok ? "ok" : "err"}`} />
-                <span className="chip-name">{s.name}</span>
-                <span className="chip-tag">{ATS_LABEL[s.ats]}·{s.slug}</span>
-                {s.ok ? <span className="chip-count">{s.count}</span> : <span className="chip-err">{s.error}</span>}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
+      {/* ---------- SECTION DETAIL ---------- */}
+      {section && (
+        <>
+          <section className="controls">
+            <div className="search">
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Filter by title, location, or company"
+                aria-label="Search roles"
+              />
+              {search && <button className="search-x" onClick={() => setSearch("")}>×</button>}
+            </div>
+            <button className={`toggle ${keywordOn ? "on" : ""}`} onClick={() => setKeywordOn((v) => !v)}>
+              Role filter {keywordOn ? "on" : "off"}
+            </button>
+            <button className={`toggle ${newOnly ? "on" : ""}`} onClick={() => setNewOnly((v) => !v)}>
+              New · 7d
+            </button>
+            <label className="sortwrap">
+              <select value={sort} onChange={(e) => setSort(e.target.value as any)} aria-label="Sort roles">
+                <option value="recent">Recently posted</option>
+                <option value="company">Company</option>
+                <option value="title">Title A–Z</option>
+              </select>
+            </label>
+          </section>
 
-      {/* list */}
-      <main className="list">
-        {rows.length === 0 ? (
-          <div className="empty">
-            <p className="empty-h">No roles match right now.</p>
-            <p className="empty-p">
-              {okSources.length > 0
-                ? "Try another section, clear the search, or turn off the role filter."
-                : "No sources resolved. Open Sources to see which slugs need fixing."}
-            </p>
+          {keywordOn && (
+            <div className="kw">
+              {keywords.map((k) => (
+                <span key={k} className="kw-chip">
+                  {k}
+                  <button onClick={() => setKeywords(keywords.filter((x) => x !== k))} aria-label={`Remove ${k}`}>×</button>
+                </span>
+              ))}
+              <input
+                className="kw-input"
+                value={kwDraft}
+                onChange={(e) => setKwDraft(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") addKw(); }}
+                onBlur={addKw}
+                placeholder="+ keyword"
+                aria-label="Add keyword"
+              />
+            </div>
+          )}
+
+          <div className="sources">
+            <button className="sources-toggle" onClick={() => setSourcesOpen((v) => !v)}>
+              <span className={`caret ${sourcesOpen ? "open" : ""}`}>▸</span>
+              Sources · {okSources.length}/{board.sources.length} live
+              {errSources.length > 0 && <span className="sources-err"> · {errSources.length} need a fix</span>}
+            </button>
+            {sourcesOpen && (
+              <div className="sources-panel">
+                {board.sources.filter((s) => s.category === section).map((s) => (
+                  <button
+                    key={s.id}
+                    className={`chip ${excluded[s.id] ? "off" : ""}`}
+                    onClick={() => setExcluded((e) => ({ ...e, [s.id]: !e[s.id] }))}
+                    title={excluded[s.id] ? "Show roles" : "Hide roles"}
+                  >
+                    <span className={`dot ${s.ok ? "ok" : "err"}`} />
+                    <span className="chip-name">{s.name}</span>
+                    {s.ok ? <span className="chip-count">{s.count}</span> : <span className="chip-err">{s.error}</span>}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
-        ) : (
-          groups.map((g) => (
-            <section key={g.cat} className="group">
-              {section === "all" && (
-                <div className="group-head">
-                  <span className="group-name">{g.cat}</span>
-                  <span className="group-count">{g.items.length}</span>
-                </div>
-              )}
-              {g.items.map((j) => <Row key={j.id} j={j} />)}
-            </section>
-          ))
-        )}
-      </main>
+
+          <main className="cards">
+            {rows.length === 0 ? (
+              <div className="empty">
+                <p className="empty-h">No roles match right now.</p>
+                <p className="empty-p">Clear the search, turn off the role filter, or head back to another section.</p>
+                <button className="btn" onClick={() => setSection(null)}>← All sections</button>
+              </div>
+            ) : (
+              rows.map((j) => <JobCard key={j.id} j={j} />)
+            )}
+          </main>
+        </>
+      )}
 
       <footer className="foot">
-        Pulls public ATS endpoints server-side (Greenhouse · Lever · Ashby · SmartRecruiters · Workday · iCIMS).
+        Pulls public ATS endpoints server-side (Greenhouse · Lever · Ashby · SmartRecruiters · Workday · Gem · iCIMS).
         Curate companies, sections, and the role include/exclude lists in <code>lib/companies.ts</code>, then redeploy.
-        Senior, VP, and engineering titles are filtered out by default.
+        Level and experience are inferred from the title and JD; senior, VP, and engineering titles are filtered out by default.
       </footer>
     </div>
   );
 }
 
-function Row({ j }: { j: Job }) {
+/* ----------------------------- job card --------------------------- */
+function JobCard({ j }: { j: Job }) {
+  const [open, setOpen] = useState(false);
+  const level = levelFromTitle(j.title);
+  const exp = experienceFromDesc(j.description);
+  const hasDesc = j.description.length > 0;
+  const clamped = !open && j.description.length > 220;
+  const shown = clamped ? j.description.slice(0, 220).replace(/\s+\S*$/, "") + "…" : j.description;
+
   return (
-    <a className="row" href={j.url} target="_blank" rel="noopener noreferrer">
-      <div className="row-main">
-        <div className="row-title">
-          {j.title}
-          {isNew(j.updatedAt) && <span className="new">new</span>}
+    <article className="card">
+      <div className="card-head">
+        <div className="card-id">
+          <h3 className="card-title">{j.title}</h3>
+          <div className="card-co">
+            <span className="co-name">{j.company}</span>
+            {j.location && <span className="co-loc">{j.location}</span>}
+            {j.department && <span className="co-dept">{j.department}</span>}
+          </div>
         </div>
-        <div className="row-meta">
-          <span className="row-co">{j.company}</span>
-          {j.location && <span>{j.location}</span>}
-          {j.department && <span className="row-dept">{j.department}</span>}
-        </div>
+        {j.updatedAt && (
+          <span className={`card-age ${isNew(j.updatedAt) ? "fresh" : ""}`}>{relTime(j.updatedAt)}</span>
+        )}
       </div>
-      {j.updatedAt && <span className="row-time">{relTime(j.updatedAt)}</span>}
-    </a>
+
+      <div className="badges">
+        {level && <span className={`badge lvl ${level === "Entry-level" ? "lo" : level === "Mid-level" ? "mid" : level === "Internship" ? "lo" : "hi"}`}>{level}</span>}
+        {exp && <span className="badge exp">{exp}</span>}
+        {j.employmentType && <span className="badge type">{j.employmentType}</span>}
+        {!level && !exp && <span className="badge muted">level not stated</span>}
+      </div>
+
+      {hasDesc ? (
+        <p className="card-desc">
+          {shown}{" "}
+          {j.description.length > 220 && (
+            <button className="more" onClick={() => setOpen((v) => !v)}>{open ? "less" : "more"}</button>
+          )}
+        </p>
+      ) : (
+        <p className="card-desc muted-desc">No summary in the feed — open the posting for the full description.</p>
+      )}
+
+      <div className="card-actions">
+        <a className="btn btn-primary" href={j.url} target="_blank" rel="noopener noreferrer">Apply →</a>
+        <a className="btn btn-ln" href={linkedInUrl(j)} target="_blank" rel="noopener noreferrer">in&nbsp;LinkedIn</a>
+      </div>
+    </article>
   );
 }
