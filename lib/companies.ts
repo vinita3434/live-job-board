@@ -294,7 +294,8 @@ export const EXCLUDE_KEYWORDS: string[] = [
   "senior", "sr", "principal", "lead", "director", "head of",
   "vp", "vice president", "svp", "evp", "distinguished",
   "staff product", "staff program", "staff strategy", "staff business",
-  "group product manager", "gpm", "global head", "iii", "iv",
+  "group product manager", "gpm", "global head",
+  "ii", "iii", "iv",       // mid-level numbering — drop "Manager II", "Analyst III"
   // engineering (note: "forward deployed engineer" survives — no bare "engineer")
   "ml engineer", "machine learning engineer", "software engineer",
   "data engineer", "research engineer", "research scientist",

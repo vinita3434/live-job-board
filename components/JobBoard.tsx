@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import type { BoardData, Job } from "@/lib/types";
 import { CATEGORY_ORDER, SECTION_BLURB } from "@/lib/companies";
-import { containsAny } from "@/lib/filter";
+import { containsAny, isUS } from "@/lib/filter";
 
 /* --------------------------- helpers ------------------------------ */
 function relTime(iso: string | null): string {
@@ -71,6 +71,7 @@ export default function JobBoard({ initial }: { initial: BoardData }) {
   const [search, setSearch] = useState("");
   const [refineKw, setRefineKw] = useState<string[]>([]); // optional extra narrowing
   const [newOnly, setNewOnly] = useState(false);
+  const [usOnly, setUsOnly] = useState(false);
   const [sort, setSort] = useState<"recent" | "company" | "title" | "fit">("recent");
   const [section, setSection] = useState<string | null>(null); // null = landing
   const [excluded, setExcluded] = useState<Record<string, boolean>>({});
@@ -92,6 +93,7 @@ export default function JobBoard({ initial }: { initial: BoardData }) {
         if (Array.isArray(p.refineKw)) setRefineKw(p.refineKw);
         if (p.excluded) setExcluded(p.excluded);
         if (p.sort) setSort(p.sort);
+        if (typeof p.usOnly === "boolean") setUsOnly(p.usOnly);
       }
       const prof = localStorage.getItem(PROFILE_KEY);
       if (prof) setProfile(prof);
@@ -102,9 +104,9 @@ export default function JobBoard({ initial }: { initial: BoardData }) {
   }, [profile]);
   useEffect(() => {
     try {
-      localStorage.setItem(PREFS_KEY, JSON.stringify({ refineKw, excluded, sort }));
+      localStorage.setItem(PREFS_KEY, JSON.stringify({ refineKw, excluded, sort, usOnly }));
     } catch {}
-  }, [refineKw, excluded, sort]);
+  }, [refineKw, excluded, sort, usOnly]);
 
   const refresh = useCallback(async () => {
     setBusy(true);
@@ -125,6 +127,7 @@ export default function JobBoard({ initial }: { initial: BoardData }) {
     return board.jobs.filter((j) => {
       if (excluded[j.companyId]) return false;
       if (refineKw.length && !containsAny(j.title, refineKw)) return false;
+      if (usOnly && !isUS(j.location)) return false;
       if (newOnly && !isNew(j.updatedAt)) return false;
       if (q) {
         const hay = `${j.title} ${j.location} ${j.company} ${j.department} ${j.category}`.toLowerCase();
@@ -132,7 +135,7 @@ export default function JobBoard({ initial }: { initial: BoardData }) {
       }
       return true;
     });
-  }, [board.jobs, excluded, search, refineKw, newOnly]);
+  }, [board.jobs, excluded, search, refineKw, newOnly, usOnly]);
 
   // per-section stats for the landing cards
   const sectionStats = useMemo(() => {
@@ -262,6 +265,9 @@ export default function JobBoard({ initial }: { initial: BoardData }) {
               />
               {search && <button className="search-x" onClick={() => setSearch("")}>×</button>}
             </div>
+            <button className={`toggle ${usOnly ? "on" : ""}`} onClick={() => setUsOnly((v) => !v)}>
+              🇺🇸 US only
+            </button>
             <button className={`toggle ${newOnly ? "on" : ""}`} onClick={() => setNewOnly((v) => !v)}>
               New · 7d
             </button>
